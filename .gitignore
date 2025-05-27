@@ -1,0 +1,17 @@
+outputs
+outputs/*
+*wandb*
+.vscode/*
+*.pyc
+*.pyc~
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+*.pywz
+*.pywz~
+*.pyz~
+*.pyo~
+*.pyd~
+*.pyc~
+*.pyc~
