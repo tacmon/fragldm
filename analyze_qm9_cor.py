@@ -6,15 +6,14 @@ QM9数据集分析与可视化
 此脚本用于分析QM9分子数据集的结构特征，并生成多种可视化图表
 """
 
-import os
+# import os
 import numpy as np
-import torch
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import seaborn as sns
 from collections import Counter, defaultdict
-from rdkit import Chem
-from rdkit.Chem import Draw
+# from rdkit import Chem
+# from rdkit.Chem import Draw
 import pandas as pd
 from matplotlib.colors import LinearSegmentedColormap
 import warnings
@@ -24,8 +23,8 @@ warnings.filterwarnings('ignore')
 # 导入项目中的数据集加载函数
 from qm9.data.args import init_argparse
 from qm9.data.utils import initialize_datasets
-from configs.datasets_config import qm9_with_h, qm9_without_h
-import qm9.dataset as dataset
+# from configs.datasets_config import qm9_with_h, qm9_without_h
+# import qm9.dataset as dataset
 
 # 创建字体属性对象
 font_path = '/usr/share/fonts/truetype/msttcorefonts/Times_New_Roman.ttf'
