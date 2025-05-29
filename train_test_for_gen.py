@@ -75,12 +75,15 @@ def analyze_and_save_scaf(model_sample, nodes_dist, args, device, dataset_info, 
             noise_mask, condition_mask = generate_connected_mask(
                 x, node_mask, noise_ratio=args.noise_ratio, random_seed=test_seed)
 
-            edge_mask = node_mask.permute(0, 2, 1) * noise_mask
+            # edge_mask = node_mask.permute(0, 2, 1) * noise_mask
+            edge_mask = torch.zeros((batch_size, n_nodes, n_nodes), device=device, dtype=dtype)
             for i in range(batch_size):
                 for u in range(n_nodes):
-                    edge_mask[i, u, u] = 0 # 自己到自己没有边
-
+                    for v in range(n_nodes):
+                        if condition_mask[i, v, 0] == 1 or noise_mask[i, u, 0] == 1:
+                            edge_mask[i, u, v] = 1
             edge_mask = edge_mask.view(batch_size * n_nodes * n_nodes, 1)
+
             scaf_x_0 = x[0].cpu()
             scaf_h_0 = torch.argmax(h['categorical'][0], dim=1).cpu()
             scaf_x = []
@@ -191,9 +194,8 @@ def analyze_and_save_scaf(model_sample, nodes_dist, args, device, dataset_info, 
             for j in range(batch_size):
                 for u in range(nodesxsample):
                     for v in range(nodesxsample):
-                        # u是终点，v是起点
-                        # edge_mask[j, u, v] = (u != v) and (condition_mask[j, v, 0] == 1 or noise_mask[j, u, 0] == 1)
-                        edge_mask[j, u, v] = noise_mask[j, u, 0]
+                        if condition_mask[j, v, 0] == 1 or noise_mask[j, u, 0] == 1:
+                            edge_mask[j, u, v] = 1
             edge_mask = edge_mask.view(batch_size * nodesxsample * nodesxsample, 1)
 
             if context is not None:

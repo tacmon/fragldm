@@ -102,9 +102,15 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             
             # 改变edge_mask删除连接向condition_mask的节点
             # edge_mask = node_mask将第二维移动到第三维 * noise_mask
-            edge_mask = node_mask.permute(0, 2, 1) * noise_mask
+            # edge_mask = node_mask.permute(0, 2, 1) * noise_mask
             batch_size = x.size(0)           
             n_nodes = node_mask.size(1)
+            edge_mask = torch.zeros((batch_size, n_nodes, n_nodes), device=device, dtype=dtype)
+            for b in range(batch_size):
+                for u in range(n_nodes):
+                    for v in range(n_nodes):
+                        if condition_mask[b, v, 0] == 1 or noise_mask[b, u, 0] == 1:
+                            edge_mask[b, u, v] = 1
             edge_mask = edge_mask.view(batch_size * n_nodes * n_nodes, 1)
 
             # 计算条件统计信息
@@ -262,8 +268,14 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
                 
                 # 改变edge_mask删除连接向condition_mask的节点
                 # edge_mask = node_mask将第二维移动到第三维 * noise_mask
-                edge_mask = node_mask.permute(0, 2, 1) * noise_mask
+                batch_size = x.size(0)           
                 n_nodes = node_mask.size(1)
+                edge_mask = torch.zeros((batch_size, n_nodes, n_nodes), device=device, dtype=dtype)
+                for b in range(batch_size):
+                    for u in range(n_nodes):
+                        for v in range(n_nodes):
+                            if condition_mask[b, v, 0] == 1 or noise_mask[b, u, 0] == 1:
+                                edge_mask[b, u, v] = 1
                 edge_mask = edge_mask.view(batch_size * n_nodes * n_nodes, 1)
                 # transform batch through flow
                 nll, _, _ = losses.compute_loss_and_nll(args, eval_model, nodes_dist, x, h,
