@@ -437,7 +437,7 @@ class EnVariationalDiffusion(torch.nn.Module):
 
         return kl_distance_x + kl_distance_h
 
-    def compute_x_pred(self, net_out, zt, gamma_t):
+    def compute_x_pred(self, net_out, zt, gamma_t, noise_mask=None, condition_mask=None):
         """Commputes x_pred, i.e. the most likely prediction of x."""
         if self.parametrization == 'x':
             x_pred = net_out
@@ -445,7 +445,10 @@ class EnVariationalDiffusion(torch.nn.Module):
             sigma_t = self.sigma(gamma_t, target_tensor=net_out)
             alpha_t = self.alpha(gamma_t, target_tensor=net_out)
             eps_t = net_out
-            x_pred = 1. / alpha_t * (zt - sigma_t * eps_t)
+            if noise_mask is not None and condition_mask is not None:
+                x_pred = 1. / alpha_t * ((zt - sigma_t * eps_t) * noise_mask + zt * condition_mask)
+            else:
+                x_pred = 1. / alpha_t * (zt - sigma_t * eps_t)
         else:
             raise ValueError(self.parametrization)
 
@@ -927,17 +930,16 @@ class EnVariationalDiffusion(torch.nn.Module):
             z = self.sample_p_zs_given_zt_scaf(s_array, t_array, z, node_mask, edge_mask, context, fix_noise=fix_noise, noise_mask=noise_mask, condition_mask=condition_mask)
             # z[:, :condition_x.size(1), :self.n_dims] = condition_x[0]
             # z[:, :condition_x.size(1), self.n_dims:] = condition_h[0]
-            # print(z[:, :condition_x.size(1), :] - torch.cat([condition_x, condition_h], dim=2))
-
             # x, h = self.vae.decode(z_xh, node_mask, edge_mask, context)
             if s % 100 == 0:
                 draw_xh.append(z)
+                print(z[:, :condition_x.size(1), :] - torch.cat([condition_x, condition_h], dim=2))
 
         # Finally sample p(x, h | z_0).
-        x, h = self.sample_p_xh_given_z0(z, node_mask, edge_mask, context, fix_noise=fix_noise)
-        h['integer'][:, :condition_x.size(1)] = condition_h[0]
-        x[:, :condition_x.size(1), :self.n_dims] = condition_x[0]
-        x[:, :condition_x.size(1), self.n_dims:] = condition_h[0]
+        x, h = self.sample_p_xh_given_z0(z, node_mask, edge_mask, context, fix_noise=fix_noise, noise_mask=noise_mask, condition_mask=condition_mask)
+        # h['integer'][:, :condition_x.size(1)] = condition_h[0]
+        # x[:, :condition_x.size(1), :self.n_dims] = condition_x[0]
+        # x[:, :condition_x.size(1), self.n_dims:] = condition_h[0]
         x = diffusion_utils.remove_mean_with_mask(x, node_mask)
 
         diffusion_utils.assert_mean_zero_with_mask(x, node_mask)
@@ -1302,7 +1304,7 @@ class EnLatentDiffusion(EnVariationalDiffusion):
 
         return degrees_of_freedom_h * (- log_sigma_x - 0.5 * np.log(2 * np.pi))
 
-    def sample_p_xh_given_z0(self, z0, node_mask, edge_mask, context, fix_noise=False):
+    def sample_p_xh_given_z0(self, z0, node_mask, edge_mask, context, fix_noise=False, noise_mask=None, condition_mask=None):
         """Samples x ~ p(x|z0)."""
         zeros = torch.zeros(size=(z0.size(0), 1), device=z0.device)
         gamma_0 = self.gamma(zeros)
@@ -1311,8 +1313,8 @@ class EnLatentDiffusion(EnVariationalDiffusion):
         net_out = self.phi(z0, zeros, node_mask, edge_mask, context)
 
         # Compute mu for p(zs | zt).
-        mu_x = self.compute_x_pred(net_out, z0, gamma_0)
-        xh = self.sample_normal(mu=mu_x, sigma=sigma_x, node_mask=node_mask, fix_noise=fix_noise)
+        mu_x = self.compute_x_pred(net_out, z0, gamma_0, noise_mask, condition_mask)
+        xh = self.sample_normal(mu=mu_x, sigma=sigma_x, node_mask=noise_mask, fix_noise=fix_noise)
 
         x = xh[:, :, :self.n_dims]
 

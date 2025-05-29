@@ -19,7 +19,7 @@ import torch
 import time
 import pickle
 from qm9.utils import prepare_context, compute_mean_mad
-from train_test import train_epoch, test, analyze_and_save, analyze_and_save_scaf
+from train_test_for_gen import analyze_and_save_scaf
 
 parser = argparse.ArgumentParser(description='E3Diffusion')
 parser.add_argument('--exp_name', type=str, default='debug_10')
@@ -138,7 +138,10 @@ parser.add_argument('--noise_ratio', type=float, default=0.5,
 parser.add_argument('--mask_strategy', type=str, default='random',
                     choices=['random', 'connected', 'central', 'peripheral'],
                     help='Strategy for masking atoms during partial conditioning')
-
+parser.add_argument('--gen_mode', type=int, default=0,
+                    help='for training or generating?')
+parser.add_argument('--scaf_model_path', type=str, default="outputs/important_par",
+                    help='Specify scaffold model path')
 args = parser.parse_args()
 
 dataset_info = get_dataset_info(args.dataset, args.remove_h)
@@ -154,45 +157,28 @@ device = torch.device("cuda" if args.cuda else "cpu")
 dtype = torch.float32
 
 if args.resume is not None:
-    exp_name = args.exp_name + '_resume'
-    start_epoch = args.start_epoch
+    exp_name = "gen_" + args.exp_name
+    start_epoch = 0
     resume = args.resume
-    wandb_usr = args.wandb_usr
-    normalization_factor = args.normalization_factor
-    normalize_factors = args.normalize_factors
-    aggregation_method = args.aggregation_method
-    num_workers = args.num_workers  # 保存当前命令行指定的num_workers值
-    no_wandb = args.no_wandb
-    noise_ratio = args.noise_ratio
-    arg_dataset = args.dataset
+    no_wandb = True
+    normalize_factors = [1,4,10]
+    num_workers = 0  # 保存当前命令行指定的num_workers值
 
 
     with open(join(args.resume, 'args.pickle'), 'rb') as f:
         args = pickle.load(f)
 
     args.resume = resume
-    args.break_train_epoch = False
-
     args.exp_name = exp_name
     args.start_epoch = start_epoch
-    args.wandb_usr = wandb_usr
     args.num_workers = num_workers  # 确保使用当前命令行指定的num_workers值
     args.no_wandb = no_wandb
-    args.noise_ratio = noise_ratio
-    args.dataset = arg_dataset
     args.normalize_factors = normalize_factors
-
-    # Careful with this -->
-    if not hasattr(args, 'normalization_factor'):
-        args.normalization_factor = normalization_factor
-    if not hasattr(args, 'aggregation_method'):
-        args.aggregation_method = aggregation_method
 
     print(args)
 
 utils.create_folders(args)
 # print(args)
-
 
 # Wandb config
 if args.no_wandb:
@@ -242,8 +228,43 @@ model = model.to(device)
 optim = get_optim(args, model)
 # print(model)
 
-gradnorm_queue = utils.Queue()
-gradnorm_queue.add(3000)  # Add large value that will be flushed.
+
+def smiles_to_3d(smiles):
+    """
+    将SMILES字符串转换为3D坐标和one-hot表示
+    
+    参数:
+        smiles: SMILES字符串
+        
+    返回:
+        positions: 原子坐标 (N, 3)
+        one_hot: one-hot原子类型表示 (N, num_atom_types)
+        charges: 原子序数 (N, 1)
+    """
+    mol = Chem.MolFromSmiles(smiles)
+    mol = Chem.AddHs(mol)
+    AllChem.EmbedMolecule(mol, randomSeed=42)
+    AllChem.MMFFOptimizeMolecule(mol)
+    
+    # 获取原子坐标
+    positions = torch.tensor(mol.GetConformers()[0].GetPositions(), dtype=torch.float32, device=device)
+    
+    # 创建one-hot表示
+    num_atom_types = len(dataset_info['atom_decoder'])
+    one_hot = torch.zeros((len(mol.GetAtoms()), num_atom_types), device=device)
+    
+    # 获取原子序数（而非电荷）
+    atomic_numbers = torch.zeros((len(mol.GetAtoms()), 1), device=device)
+    
+    for i, atom in enumerate(mol.GetAtoms()):
+        atom_type = atom.GetSymbol()
+        if atom_type in dataset_info['atom_encoder']:
+            one_hot[i, dataset_info['atom_encoder'][atom_type]] = 1
+        # 获取原子序数
+        atomic_numbers[i, 0] = atom.GetAtomicNum()
+    
+    return positions, one_hot, atomic_numbers
+
 
 def main():
     if args.resume is not None:
@@ -252,99 +273,32 @@ def main():
         model.load_state_dict(flow_state_dict)
         optim.load_state_dict(optim_state_dict)
 
-    # Initialize dataparallel if enabled and possible.
-    if args.dp and torch.cuda.device_count() > 1:
-        print(f'Training using {torch.cuda.device_count()} GPUs')
-        model_dp = torch.nn.DataParallel(model.cpu())
-        model_dp = model_dp.cuda()
-    else:
-        model_dp = model
+    original_loader = dataloaders['valid']
+    eval_dataset = original_loader.dataset
+    
+    # 创建新的DataLoader，保留原始配置
+    eval_loader = torch.utils.data.DataLoader(
+        dataset=eval_dataset,
+        batch_size=1,
+        shuffle=False,  # 评估时不需要打乱顺序
+        num_workers=0,  # 避免多进程问题
+        collate_fn=original_loader.collate_fn,  # 保留原始的collate函数
+        pin_memory=original_loader.pin_memory,
+        drop_last=original_loader.drop_last,
+        # 其他可能存在的参数将自动使用默认值
+    )
 
-    # Initialize model copy for exponential moving average of params.
-    if args.ema_decay > 0:
-        model_ema = copy.deepcopy(model)
-        ema = flow_utils.EMA(args.ema_decay)
+    positions, one_hot, atomic_numbers = smiles_to_3d("C(=O)[O-]")
+    condition_x = positions
+    # 将中心移动到原点
+    condition_x = condition_x - torch.mean(condition_x, dim=0)
+    condition_h = {'categorical': one_hot, 'integer': atomic_numbers}
 
-        if args.dp and torch.cuda.device_count() > 1:
-            model_ema_dp = torch.nn.DataParallel(model_ema)
-        else:
-            model_ema_dp = model_ema
-    else:
-        ema = None
-        model_ema = model
-        model_ema_dp = model_dp
-
-    best_nll_val = 1e8
-    best_nll_test = 1e8
-    for epoch in range(args.start_epoch, args.n_epochs):
-        start_epoch = time.time()
-        if True:
-            train_epoch(args=args, loader=dataloaders['train'], epoch=epoch, model=model, model_dp=model_dp,
-                        model_ema=model_ema, ema=ema, device=device, dtype=dtype, property_norms=property_norms,
-                        nodes_dist=nodes_dist, dataset_info=dataset_info,
-                        gradnorm_queue=gradnorm_queue, optim=optim, prop_dist=prop_dist)
-        print(f"Epoch took {time.time() - start_epoch:.1f} seconds.")
-
-        if epoch % args.test_epochs == 0:
-            if isinstance(model, en_diffusion.EnVariationalDiffusion):
-                wandb.log(model.log_info(), commit=True)
-
-            if not args.break_train_epoch and args.train_diffusion:
-                if args.partial_conditioning:
-                    # 获取原始dataloader的所有参数
-                    original_loader = dataloaders['valid']
-                    eval_dataset = original_loader.dataset
-                    
-                    # 创建新的DataLoader，保留原始配置
-                    eval_loader = torch.utils.data.DataLoader(
-                        dataset=eval_dataset,
-                        batch_size=1,
-                        shuffle=False,  # 评估时不需要打乱顺序
-                        num_workers=0,  # 避免多进程问题
-                        collate_fn=original_loader.collate_fn,  # 保留原始的collate函数
-                        pin_memory=original_loader.pin_memory,
-                        drop_last=original_loader.drop_last,
-                        # 其他可能存在的参数将自动使用默认值
-                    )
-                    
-                    analyze_and_save_scaf(args=args, epoch=epoch, model_sample=model_ema, nodes_dist=nodes_dist,
-                                    dataset_info=dataset_info, device=device,
-                                    prop_dist=prop_dist, n_samples=30, loader=eval_loader, dtype=dtype, property_norms=property_norms) # n_samples=args.n_stability_samples
-                else:
-                    analyze_and_save(args=args, epoch=epoch, model_sample=model_ema, nodes_dist=nodes_dist,
-                                    dataset_info=dataset_info, device=device,
-                                    prop_dist=prop_dist, n_samples=args.n_stability_samples)
-            nll_val = test(args=args, loader=dataloaders['valid'], epoch=epoch, eval_model=model_ema_dp,
-                           partition='Val', device=device, dtype=dtype, nodes_dist=nodes_dist,
-                           property_norms=property_norms)
-            nll_test = test(args=args, loader=dataloaders['test'], epoch=epoch, eval_model=model_ema_dp,
-                            partition='Test', device=device, dtype=dtype,
-                            nodes_dist=nodes_dist, property_norms=property_norms)
-
-            if nll_val < best_nll_val:
-                best_nll_val = nll_val
-                best_nll_test = nll_test
-                if args.save_model:
-                    args.current_epoch = epoch + 1
-                    utils.save_model(optim, 'outputs/%s/optim.npy' % args.exp_name)
-                    utils.save_model(model, 'outputs/%s/generative_model.npy' % args.exp_name)
-                    if args.ema_decay > 0:
-                        utils.save_model(model_ema, 'outputs/%s/generative_model_ema.npy' % args.exp_name)
-                    with open('outputs/%s/args.pickle' % args.exp_name, 'wb') as f:
-                        pickle.dump(args, f)
-
-                if args.save_model:
-                    utils.save_model(optim, 'outputs/%s/optim_%d.npy' % (args.exp_name, epoch))
-                    utils.save_model(model, 'outputs/%s/generative_model_%d.npy' % (args.exp_name, epoch))
-                    if args.ema_decay > 0:
-                        utils.save_model(model_ema, 'outputs/%s/generative_model_ema_%d.npy' % (args.exp_name, epoch))
-                    with open('outputs/%s/args_%d.pickle' % (args.exp_name, epoch), 'wb') as f:
-                        pickle.dump(args, f)
-            print('Val loss: %.4f \t Test loss:  %.4f' % (nll_val, nll_test))
-            print('Best val loss: %.4f \t Best test loss:  %.4f' % (best_nll_val, best_nll_test))
-            wandb.log({"Val loss ": nll_val}, commit=True)
-            wandb.log({"Test loss ": nll_test}, commit=True)
-            wandb.log({"Best cross-validated test loss ": best_nll_test}, commit=True)
+    analyze_and_save_scaf(args=args, model_sample=model, nodes_dist=nodes_dist,
+                    dataset_info=dataset_info, device=device,
+                    prop_dist=prop_dist, n_samples=100, loader=eval_loader, dtype=dtype, property_norms=property_norms,
+                    manual_condition_x=condition_x, manual_condition_h=condition_h
+                    ) # n_samples=args.n_stability_samples
 
 if __name__ == "__main__":
     main()
