@@ -228,7 +228,7 @@ class EGNN_encoder_QM9(nn.Module):
 
         if torch.any(torch.isnan(vel)):
             print('Warning: detected nan, resetting EGNN output to zero.')
-            vel = torch.zeros_like(vel)
+            vel = torch.zeros_like(vel)      
 
         if node_mask is None:
             vel = remove_mean(vel)

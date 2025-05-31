@@ -221,37 +221,53 @@ def sample_scaf(args, device, generative_model, dataset_info,
                 condition_mask = get_condition_mask(node_mask.squeeze(2), noise_mask).unsqueeze(2)
                 noise_mask = noise_mask.unsqueeze(2)
 
-            edge_mask = node_mask.permute(0, 2, 1) * noise_mask
+            edge_mask = torch.zeros((batch_size, n_nodes, n_nodes), device=device, dtype=dtype)
+            for i in range(batch_size):
+                for u in range(n_nodes):
+                    for v in range(n_nodes):
+                        if condition_mask[i, v, 0] == 1 or noise_mask[i, u, 0] == 1:
+                            edge_mask[i, u, v] = 1
             edge_mask = edge_mask.view(batch_size * n_nodes * n_nodes, 1)
+
             scaf_x_0 = x[0].cpu()
             scaf_h_0 = torch.argmax(h['categorical'][0], dim=1).cpu()
             scaf_x = []
             scaf_h = []
+            encode_scaf_x = []
+            encode_scaf_h = {'categorical': [], 'integer': []}
             for __ in range(scaf_x_0.shape[0]):
                 if condition_mask[0, __, 0] == 1:
                     scaf_x.append([float(___) for ___ in scaf_x_0[__]])
                     scaf_h.append(int(scaf_h_0[__]))
+                    encode_scaf_x.append([float(___) for ___ in x[0][__]])
+                    encode_scaf_h['categorical'].append([float(___) for ___ in h['categorical'][0][__]])
+                    encode_scaf_h['integer'].append([float(___) for ___ in h['integer'][0][__]])
             scaf_x = torch.tensor(scaf_x)
             scaf_h = torch.tensor(scaf_h)
+            encode_scaf_x = torch.tensor(encode_scaf_x)
+            encode_scaf_h['categorical'] = torch.tensor(encode_scaf_h['categorical'])
+            encode_scaf_h['integer'] = torch.tensor(encode_scaf_h['integer'])
         else:
             raise ValueError("args.partial_conditioning is not True")
 
-        z_x_mu, z_x_sigma, z_h_mu, z_h_sigma =  generative_model.vae.encode(x, h, node_mask, edge_mask, context)
+        scaf_x = scaf_x - torch.mean(scaf_x, dim=0, keepdim=True)
+        encode_scaf_x = encode_scaf_x - torch.mean(encode_scaf_x, dim=0, keepdim=True)
+        # scaf_h = scaf_h - torch.mean(scaf_h, dim=0, keepdim=True)
+        encode_scaf_x = encode_scaf_x.unsqueeze(0).to(device, dtype)
+        encode_scaf_h['categorical'] = encode_scaf_h['categorical'].unsqueeze(0).to(device, dtype)
+        encode_scaf_h['integer'] = encode_scaf_h['integer'].unsqueeze(0).to(device, dtype)
+        encode_node_mask = torch.ones((1, encode_scaf_x.shape[1], 1), device=device, dtype=dtype)
+        encode_edge_mask = torch.ones((1, encode_scaf_x.shape[1], encode_scaf_x.shape[1]), device=device, dtype=dtype)
+        for i in range(encode_scaf_x.shape[1]):
+            encode_edge_mask[0, i, i] = 0
+        encode_edge_mask = encode_edge_mask.view(1, encode_scaf_x.shape[1] * encode_scaf_x.shape[1], 1)
+        
+        if context is not None:
+            context = context[:, :1, :1].repeat(1, encode_scaf_x.shape[1], 1)
+        z_x_mu, z_x_sigma, z_h_mu, z_h_sigma =  generative_model.vae.encode(encode_scaf_x, encode_scaf_h, encode_node_mask, encode_edge_mask, context)
         # 获取编码后的潜变量表示
-        encoded_condition_x = z_x_mu  # [1, n_nodes, 3]
-        encoded_condition_h = z_h_mu  # [1, n_nodes, latent_nf]
-
-        condition_x = []
-        condition_h = []
-        for __ in range(condition_mask.shape[1]):
-            if condition_mask[0, __, 0] == 1:
-                condition_x.append([float(___) for ___ in encoded_condition_x[0, __, :]])
-                condition_h.append([float(___) for ___ in encoded_condition_h[0, __, :]])
-        condition_x = torch.tensor(condition_x).to(device, dtype)
-        condition_x = condition_x - torch.mean(condition_x, dim=0, keepdim=True)
-        condition_h = torch.tensor(condition_h).to(device, dtype)
-        condition_x = condition_x.unsqueeze(0)
-        condition_h = condition_h.unsqueeze(0)
+        condition_x = z_x_mu
+        condition_h = z_h_mu
 
         noise_mask = node_mask.clone()
         condition_mask = torch.zeros_like(node_mask).to(device, dtype)
@@ -259,7 +275,12 @@ def sample_scaf(args, device, generative_model, dataset_info,
             noise_mask[i, 0:condition_x.size(1), 0] = 0
             condition_mask[i, 0:condition_x.size(1), 0] = 1
         # Compute edge_mask
-        edge_mask = node_mask.permute(0, 2, 1) * noise_mask
+        edge_mask = torch.zeros((batch_size, n_nodes, n_nodes), device=device)
+        for j in range(batch_size):
+            for u in range(n_nodes):
+                for v in range(n_nodes):
+                    if condition_mask[j, v, 0] == 1 or noise_mask[j, u, 0] == 1:
+                        edge_mask[j, u, v] = 1
         edge_mask = edge_mask.view(batch_size * n_nodes * n_nodes, 1)
 
         if args.probabilistic_model == 'diffusion':

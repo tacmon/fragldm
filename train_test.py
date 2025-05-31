@@ -405,7 +405,7 @@ def analyze_and_save_scaf(epoch, model_sample, nodes_dist, args, device, dataset
     assert(batch_size == 1)
     assert n_samples % batch_size == 0
     molecules = {'one_hot': [], 'x': [], 'node_mask': []}
-    have_found_stable_molecule = False
+    have_found_stable_molecule = 0
     for i in range(int(n_samples/batch_size)):
         nodesxsample = nodes_dist.sample(batch_size)
         # one_hot, charges, x, node_mask = sample(args, device, model_sample, dataset_info, prop_dist,
@@ -435,9 +435,9 @@ def analyze_and_save_scaf(epoch, model_sample, nodes_dist, args, device, dataset
               f"分子稳定性: {mol_validity_dict['mol_stable']*100:.1f}%, "
               f"RDKit有效: {is_valid_by_rdkit}")
 
-        if (not have_found_stable_molecule) and (is_valid_by_rdkit or i == int(n_samples/batch_size)-1):
-            have_found_stable_molecule = True
-            gen_dir = 'outputs/%s/epoch_%d' % (args.exp_name, epoch)
+        if have_found_stable_molecule < 2 and (is_valid_by_rdkit or i == int(n_samples/batch_size)-1):
+            have_found_stable_molecule += 1
+            gen_dir = 'outputs/%s/epoch_%d/%d' % (args.exp_name, epoch, have_found_stable_molecule)
             os.makedirs(gen_dir, exist_ok=True)
             
             # 保存SMILES字符串到文件
