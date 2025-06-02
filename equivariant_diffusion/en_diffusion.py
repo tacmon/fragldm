@@ -845,7 +845,7 @@ class EnVariationalDiffusion(torch.nn.Module):
 
         # Compute sigma for p(zs | zt).
         # sigma = sigma_t_given_s * sigma_s / sigma_t
-        sigma = sigma_t_given_s * sigma_s / sigma_t * noise_mask
+        sigma = sigma_t_given_s * sigma_s / sigma_t
 
         # Sample zs given the paramters derived from zt.
         zh_unknown = self.sample_normal(mu, sigma, node_mask, fix_noise)
