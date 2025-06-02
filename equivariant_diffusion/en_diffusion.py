@@ -826,14 +826,6 @@ class EnVariationalDiffusion(torch.nn.Module):
         sigma_s = self.sigma(gamma_s, target_tensor=zt)
         sigma_t = self.sigma(gamma_t, target_tensor=zt)
 
-        eps_repaint = self.sample_combined_position_feature_noise(zt.shape[0], zt.shape[1], noise_mask)
-        log_alpha2_t = F.logsigmoid(-gamma_t)
-        alpha_t = torch.exp(log_alpha2_t / 2)
-        zh_known = eps_repaint * (1 - alpha_t)
-
-        zh_known[:, :condition_x.size(1), :self.n_dims] = condition_x[0] * torch.sqrt(alpha_t)
-        zh_known[:, :condition_x.size(1), self.n_dims:] = condition_h[0] * torch.sqrt(alpha_t)
-
         # Neural net prediction.
         eps_t = self.phi(zt, t, node_mask, edge_mask, context)
 
@@ -848,7 +840,7 @@ class EnVariationalDiffusion(torch.nn.Module):
         sigma = sigma_t_given_s * sigma_s / sigma_t * noise_mask
 
         # Sample zs given the paramters derived from zt.
-        zh_unknown = self.sample_normal(mu, sigma, node_mask, fix_noise)
+        zs = self.sample_normal(mu, sigma, node_mask, fix_noise)
         zs = zh_known * condition_mask + zh_unknown * noise_mask
 
         # Project down to avoid numerical runaway of the center of gravity.
