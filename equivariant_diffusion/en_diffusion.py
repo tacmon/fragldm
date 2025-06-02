@@ -815,7 +815,7 @@ class EnVariationalDiffusion(torch.nn.Module):
         return zs
     
 
-    def sample_p_zs_given_zt_scaf(self, s, t, zt, node_mask, edge_mask, context, fix_noise=False, noise_mask=None, condition_mask=None):
+    def sample_p_zs_given_zt_scaf(self, s, t, zt, node_mask, edge_mask, context, fix_noise=False, noise_mask=None, condition_mask=None, condition_x=None, condition_h=None):
         """Samples from zs ~ p(zs | zt). Only used during sampling."""
         gamma_s = self.gamma(s)
         gamma_t = self.gamma(t)
@@ -826,21 +826,30 @@ class EnVariationalDiffusion(torch.nn.Module):
         sigma_s = self.sigma(gamma_s, target_tensor=zt)
         sigma_t = self.sigma(gamma_t, target_tensor=zt)
 
-        # Neural net prediction.
-        eps_t = self.phi(zt, t, node_mask, edge_mask, context) # 需要更改！！！！！
+        eps_repaint = self.sample_combined_position_feature_noise(zt.shape[0], zt.shape[1], noise_mask)
+        log_alpha2_t = F.logsigmoid(-gamma_t)
+        alpha_t = torch.exp(log_alpha2_t / 2)
+        zh_known = eps_repaint * (1 - alpha_t)
 
-        # Compute mu for p(zs | zt).
+        zh_known[:, :condition_x.size(1), :self.n_dims] = condition_x[0] * torch.sqrt(alpha_t)
+        zh_known[:, :condition_x.size(1), self.n_dims:] = condition_h[0] * torch.sqrt(alpha_t)
+
+        # Neural net prediction.
+        eps_t = self.phi(zt, t, node_mask, edge_mask, context)
+
         diffusion_utils.assert_mean_zero_with_mask(zt[:, :, :self.n_dims], node_mask)
         diffusion_utils.assert_mean_zero_with_mask(eps_t[:, :, :self.n_dims], node_mask)
+
+        # Compute mu for p(zs | zt).
         mu = zt / alpha_t_given_s - (sigma2_t_given_s / alpha_t_given_s / sigma_t) * eps_t
-        mu = mu * noise_mask + zt * condition_mask
 
         # Compute sigma for p(zs | zt).
         # sigma = sigma_t_given_s * sigma_s / sigma_t
         sigma = sigma_t_given_s * sigma_s / sigma_t * noise_mask
 
         # Sample zs given the paramters derived from zt.
-        zs = self.sample_normal(mu, sigma, node_mask, fix_noise)
+        zh_unknown = self.sample_normal(mu, sigma, node_mask, fix_noise)
+        zs = zh_known * condition_mask + zh_unknown * noise_mask
 
         # Project down to avoid numerical runaway of the center of gravity.
         zs = torch.cat(
@@ -904,15 +913,12 @@ class EnVariationalDiffusion(torch.nn.Module):
         """
         Draw samples from the generative model.
         """
+        assert(n_samples == 1)
         if fix_noise:
             # Noise is broadcasted over the batch axis, useful for visualizations.
             z = self.sample_combined_position_feature_noise(1, n_nodes, noise_mask)
-            z[:, :condition_x.size(1), :self.n_dims] = condition_x[0]
-            z[:, :condition_x.size(1), self.n_dims:] = condition_h[0]
         else:
             z = self.sample_combined_position_feature_noise(n_samples, n_nodes, noise_mask)
-            z[:, :condition_x.size(1), :self.n_dims] = condition_x[0]
-            z[:, :condition_x.size(1), self.n_dims:] = condition_h[0]
 
         diffusion_utils.assert_mean_zero_with_mask(z[:, :, :self.n_dims], node_mask)
 
@@ -927,13 +933,17 @@ class EnVariationalDiffusion(torch.nn.Module):
             s_array = s_array / self.T
             t_array = t_array / self.T
 
-            z = self.sample_p_zs_given_zt_scaf(s_array, t_array, z, node_mask, edge_mask, context, fix_noise=fix_noise, noise_mask=noise_mask, condition_mask=condition_mask)
+            z = self.sample_p_zs_given_zt_scaf(s_array, t_array, z, node_mask, edge_mask, context, fix_noise=fix_noise, 
+                                               noise_mask=noise_mask, condition_mask=condition_mask, condition_x=condition_x, condition_h=condition_h)
             # z[:, :condition_x.size(1), :self.n_dims] = condition_x[0]
             # z[:, :condition_x.size(1), self.n_dims:] = condition_h[0]
             # x, h = self.vae.decode(z_xh, node_mask, edge_mask, context)
+            delta_condition = z[:, :condition_x.size(1), :self.n_dims].mean(dim=1,keepdim=True) - condition_x.mean(dim=1,keepdim=True)
+            condition_x = condition_x + delta_condition
+
             if s % 100 == 0:
                 draw_xh.append(z)
-                print(z[:, :condition_x.size(1), :] - torch.cat([condition_x, condition_h], dim=2))
+                print(delta_condition)
 
         # Finally sample p(x, h | z_0).
         x, h = self.sample_p_xh_given_z0(z, node_mask, edge_mask, context, fix_noise=fix_noise, noise_mask=noise_mask, condition_mask=condition_mask)

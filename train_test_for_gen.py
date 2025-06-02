@@ -190,13 +190,18 @@ def analyze_and_save_scaf(model_sample, nodes_dist, args, device, dataset_info, 
                 noise_mask[j, 0:condition_x.size(1), 0] = 0
                 condition_mask[j, 0:condition_x.size(1), 0] = 1
 
-            edge_mask = torch.zeros((batch_size, nodesxsample, nodesxsample), device=device)
-            for j in range(batch_size):
-                for u in range(nodesxsample):
-                    for v in range(nodesxsample):
-                        if condition_mask[j, v, 0] == 1 or noise_mask[j, u, 0] == 1:
-                            edge_mask[j, u, v] = 1
-            edge_mask = edge_mask.view(batch_size * nodesxsample * nodesxsample, 1)
+            # edge_mask = torch.zeros((batch_size, nodesxsample, nodesxsample), device=device)
+            # for j in range(batch_size):
+            #     for u in range(nodesxsample):
+            #         for v in range(nodesxsample):
+            #             if condition_mask[j, v, 0] == 1 or noise_mask[j, u, 0] == 1:
+            #                 edge_mask[j, u, v] = 1
+            # edge_mask = edge_mask.view(batch_size * nodesxsample * nodesxsample, 1)
+            edge_mask = node_mask.unsqueeze(1) * node_mask.unsqueeze(2)
+            #mask diagonal
+            diag_mask = ~torch.eye(edge_mask.size(1), dtype=torch.bool, device=device).unsqueeze(0)
+            edge_mask = edge_mask.squeeze(-1)
+            edge_mask *= diag_mask
 
             if context is not None:
                 context = context[:, :1, :1].repeat(1, nodesxsample, 1)
