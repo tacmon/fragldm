@@ -1,15 +1,15 @@
 #!/bin/bash
 
 # 设置可调整的参数（可根据需要修改）
-EXP_NAME="scaffold_based_bs64_nf192_nlayers9_lr1e-4_noise1e-5_steps1000_poly2_l2_latent1_ema0.9999_normalize1410_clipgradTrue_resume"
+EXP_NAME="scaffold_based_test"
 N_EPOCHS=3000
-BATCH_SIZE=64
+BATCH_SIZE=8
 TEST_EPOCHS=20
 NOISE_RATIO=0.75
 MASK_STRATEGY="connected"  # 可选: "random", "connected", "central", "peripheral"
 NUM_WORKERS=8  # 数据加载并行进程数
-RESUME_PATH="./outputs/${EXP_NAME}_resume"
-START_EPOCH=243  # 从210个epoch开始续训
+# RESUME_PATH="./outputs/${EXP_NAME}_resume"
+# START_EPOCH=243  # 从210个epoch开始续训
 
 # 颜色输出
 GREEN='\033[0;32m'
@@ -29,8 +29,9 @@ export PYTHONPATH=$(pwd)
 # 运行训练命令
 python main_qm9.py \
   --exp_name "$EXP_NAME" \
-  --resume "$RESUME_PATH" \
-  --start_epoch $START_EPOCH \
+  # --resume "$RESUME_PATH" \
+  # --start_epoch $START_EPOCH \
+  --no_wandb \
   --n_epochs $N_EPOCHS \
   --batch_size $BATCH_SIZE \
   --nf 192 \

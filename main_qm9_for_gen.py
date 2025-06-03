@@ -138,10 +138,6 @@ parser.add_argument('--noise_ratio', type=float, default=0.5,
 parser.add_argument('--mask_strategy', type=str, default='random',
                     choices=['random', 'connected', 'central', 'peripheral'],
                     help='Strategy for masking atoms during partial conditioning')
-parser.add_argument('--gen_mode', type=int, default=0,
-                    help='for training or generating?')
-parser.add_argument('--scaf_model_path', type=str, default="outputs/important_par",
-                    help='Specify scaffold model path')
 args = parser.parse_args()
 
 dataset_info = get_dataset_info(args.dataset, args.remove_h)
@@ -158,12 +154,14 @@ dtype = torch.float32
 
 if args.resume is not None:
     exp_name = "gen_" + args.exp_name
-    start_epoch = 0
+    start_epoch = args.start_epoch
     resume = args.resume
-    no_wandb = True
-    normalize_factors = [1,4,10]
-    num_workers = 0  # 保存当前命令行指定的num_workers值
-
+    no_wandb = args.no_wandb
+    # normalize_factors = [1,4,10]
+    num_workers = args.num_workers  # 保存当前命令行指定的num_workers值
+    partial_conditioning = args.partial_conditioning
+    mask_strategy = args.mask_strategy
+    noise_ratio = args.noise_ratio
 
     with open(join(args.resume, 'args.pickle'), 'rb') as f:
         args = pickle.load(f)
@@ -173,7 +171,10 @@ if args.resume is not None:
     args.start_epoch = start_epoch
     args.num_workers = num_workers  # 确保使用当前命令行指定的num_workers值
     args.no_wandb = no_wandb
-    args.normalize_factors = normalize_factors
+    args.partial_conditioning = partial_conditioning
+    args.mask_strategy = mask_strategy
+    args.noise_ratio = noise_ratio
+    # args.normalize_factors = normalize_factors
 
     print(args)
 

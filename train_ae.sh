@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置可调整的参数（可根据需要修改）
-EXP_NAME="vae_only_bs16_nf192_nlayers9_lr1e-4_latent1_kl0.01_ema0.9999_normalize1410"
+EXP_NAME="train_vae_test"
 N_EPOCHS=500
 BATCH_SIZE=16
 TEST_EPOCHS=10

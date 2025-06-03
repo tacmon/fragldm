@@ -222,6 +222,9 @@ def sample_scaf(args, device, generative_model, dataset_info,
                 noise_mask = noise_mask.unsqueeze(2)
 
             edge_mask = node_mask.permute(0, 2, 1) * noise_mask
+            for i in range(batch_size):
+                for u in range(n_nodes):
+                    edge_mask[i, u, u] = 0
             edge_mask = edge_mask.view(batch_size * n_nodes * n_nodes, 1)
             scaf_x_0 = x[0].cpu()
             scaf_h_0 = torch.argmax(h['categorical'][0], dim=1).cpu()
@@ -260,6 +263,9 @@ def sample_scaf(args, device, generative_model, dataset_info,
             condition_mask[i, 0:condition_x.size(1), 0] = 1
         # Compute edge_mask
         edge_mask = node_mask.permute(0, 2, 1) * noise_mask
+        for i in range(batch_size):
+            for u in range(n_nodes):
+                edge_mask[i, u, u] = 0
         edge_mask = edge_mask.view(batch_size * n_nodes * n_nodes, 1)
 
         if args.probabilistic_model == 'diffusion':

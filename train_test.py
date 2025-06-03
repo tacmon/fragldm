@@ -103,6 +103,9 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             # 改变edge_mask删除连接向condition_mask的节点
             # edge_mask = node_mask将第二维移动到第三维 * noise_mask
             edge_mask = node_mask.permute(0, 2, 1) * noise_mask
+            for i in range(batch_size):
+                for u in range(n_nodes):
+                    edge_mask[i, u, u] = 0
             batch_size = x.size(0)           
             n_nodes = node_mask.size(1)
             edge_mask = edge_mask.view(batch_size * n_nodes * n_nodes, 1)
@@ -263,6 +266,9 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
                 # 改变edge_mask删除连接向condition_mask的节点
                 # edge_mask = node_mask将第二维移动到第三维 * noise_mask
                 edge_mask = node_mask.permute(0, 2, 1) * noise_mask
+                for i in range(batch_size):
+                    for u in range(n_nodes):
+                        edge_mask[i, u, u] = 0
                 n_nodes = node_mask.size(1)
                 edge_mask = edge_mask.view(batch_size * n_nodes * n_nodes, 1)
                 # transform batch through flow
