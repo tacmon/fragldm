@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置可调整的参数（可根据需要修改）
-EXP_NAME="repaint"
+EXP_NAME="pretrained_force"
 RESUME_PATH="./outputs/qm9_latent2"
 START_EPOCH=0
 NOISE_RATIO=0.75

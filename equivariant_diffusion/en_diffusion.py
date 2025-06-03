@@ -837,11 +837,10 @@ class EnVariationalDiffusion(torch.nn.Module):
 
         # Compute sigma for p(zs | zt).
         # sigma = sigma_t_given_s * sigma_s / sigma_t
-        sigma = sigma_t_given_s * sigma_s / sigma_t * noise_mask
+        sigma = sigma_t_given_s * sigma_s / sigma_t
 
         # Sample zs given the paramters derived from zt.
         zs = self.sample_normal(mu, sigma, node_mask, fix_noise)
-        zs = zh_known * condition_mask + zh_unknown * noise_mask
 
         # Project down to avoid numerical runaway of the center of gravity.
         zs = torch.cat(
@@ -932,6 +931,8 @@ class EnVariationalDiffusion(torch.nn.Module):
             # x, h = self.vae.decode(z_xh, node_mask, edge_mask, context)
             delta_condition = z[:, :condition_x.size(1), :self.n_dims].mean(dim=1,keepdim=True) - condition_x.mean(dim=1,keepdim=True)
             condition_x = condition_x + delta_condition
+            z[:, :condition_x.size(1), :self.n_dims] = condition_x
+            z[:, :condition_h.size(1), self.n_dims:] = condition_h
 
             if s % 100 == 0:
                 draw_xh.append(z)
