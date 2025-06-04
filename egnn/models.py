@@ -103,8 +103,8 @@ class EGNN_dynamics_QM9(nn.Module):
 
         if node_mask is None:
             vel = remove_mean(vel)
-        elif noise_mask != None:
-            vel = remove_mean_with_mask(vel, noise_mask.view(bs, n_nodes, 1))
+        # elif noise_mask != None:
+        #     vel = remove_mean_with_mask(vel, noise_mask.view(bs, n_nodes, 1))
         else:
             vel = remove_mean_with_mask(vel, node_mask.view(bs, n_nodes, 1))
 

@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # 设置可调整的参数（可根据需要修改）
-EXP_NAME="scaffold_based_authority_random_encoder"
+EXP_NAME="scaffold_based_test"
 N_EPOCHS=3000
-BATCH_SIZE=64
+BATCH_SIZE=8
 TEST_EPOCHS=20
 NOISE_RATIO=0.8
 MASK_STRATEGY="connected"  # 可选: "random", "connected", "central", "peripheral"
@@ -29,8 +29,6 @@ export PYTHONPATH=$(pwd)
 # 运行训练命令
 python main_qm9.py \
   --exp_name "$EXP_NAME" \
-  # --resume "$RESUME_PATH" \
-  # --start_epoch $START_EPOCH \
   --n_epochs $N_EPOCHS \
   --batch_size $BATCH_SIZE \
   --nf 192 \
@@ -47,11 +45,11 @@ python main_qm9.py \
   --lr 1e-4 \
   --clip_grad True \
   --test_epochs $TEST_EPOCHS \
-  # --ae_path "outputs/vae_best/" \
   --partial_conditioning \
   --noise_ratio $NOISE_RATIO \
   --mask_strategy $MASK_STRATEGY \
   --num_workers $NUM_WORKERS \
-  --break_train_epoch False
+  --break_train_epoch False \
+  --no_wandb
 
 echo -e "${GREEN}训练完成!${NC}" 

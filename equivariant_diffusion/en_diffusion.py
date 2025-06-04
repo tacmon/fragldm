@@ -649,6 +649,8 @@ class EnVariationalDiffusion(torch.nn.Module):
 
         # Neural net prediction.
         net_out = self.phi(z_t, t, node_mask, edge_mask, context, noise_mask)# * noise_mask
+        net_out = net_out * noise_mask
+        net_out = diffusion_utils.remove_mean_with_mask(net_out, noise_mask)
 
         # Compute the error.
         error = self.compute_error(net_out, gamma_t, eps)
@@ -928,8 +930,10 @@ class EnVariationalDiffusion(torch.nn.Module):
             t_array = t_array / self.T
 
             z = self.sample_p_zs_given_zt_scaf(s_array, t_array, z, node_mask, edge_mask, context, fix_noise=fix_noise, noise_mask=noise_mask, condition_mask=condition_mask)
-            # z[:, :condition_x.size(1), :self.n_dims] = condition_x[0]
-            # z[:, :condition_x.size(1), self.n_dims:] = condition_h[0]
+            delta_x = z[:, :condition_x.size(1), :self.n_dims].mean(dim=1, keepdim=True) - condition_x.mean(dim=1, keepdim=True)
+            condition_x = condition_x + delta_x
+            z[:, :condition_x.size(1), :self.n_dims] = condition_x[0]
+            z[:, :condition_h.size(1), self.n_dims:] = condition_h[0]
             # x, h = self.vae.decode(z_xh, node_mask, edge_mask, context)
             if s % 100 == 0:
                 draw_xh.append(z)
@@ -937,6 +941,7 @@ class EnVariationalDiffusion(torch.nn.Module):
 
         # Finally sample p(x, h | z_0).
         x, h = self.sample_p_xh_given_z0(z, node_mask, edge_mask, context, fix_noise=fix_noise, noise_mask=noise_mask, condition_mask=condition_mask)
+        # this may be wrong
         # h['integer'][:, :condition_x.size(1)] = condition_h[0]
         # x[:, :condition_x.size(1), :self.n_dims] = condition_x[0]
         # x[:, :condition_x.size(1), self.n_dims:] = condition_h[0]
@@ -1178,7 +1183,7 @@ class EnHierarchicalVAE(torch.nn.Module):
 
         return loss, {'loss_t': loss.squeeze(), 'rec_error': loss_recon.squeeze()}
 
-    def forward(self, x, h, node_mask=None, edge_mask=None, context=None):
+    def forward(self, x, h, node_mask=None, edge_mask=None, context=None, noise_mask=None, condition_mask=None):
         """
         Computes the ELBO if training. And if eval then always computes NLL.
         """
