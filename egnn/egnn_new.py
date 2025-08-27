@@ -1,4 +1,4 @@
-from torch import nn
+from torch import nn, ones_like
 import torch
 import math
 
@@ -195,6 +195,10 @@ class EGNN(nn.Module):
         self.to(self.device)
 
     def forward(self, h, x, edge_index, node_mask=None, edge_mask=None):
+        edge_index[0] = edge_index[0][edge_mask.view(-1) == 1]
+        edge_index[1] = edge_index[1][edge_mask.view(-1) == 1]
+        assert(len(edge_mask.shape) == 2 and edge_mask.shape[1] == 1)
+        edge_mask = torch.ones((int(edge_mask.sum(dim=0)[0]), 1), device=edge_mask.device)
         # Edit Emiel: Remove velocity as input
         distances, _ = coord2diff(x, edge_index)
         if self.sin_embedding is not None:

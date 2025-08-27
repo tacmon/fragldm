@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置可调整的参数（可根据需要修改）
-EXP_NAME="scaffold_based_test"
+EXP_NAME="fragldm_base"
 N_EPOCHS=3000
 BATCH_SIZE=8
 TEST_EPOCHS=20
@@ -16,7 +16,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}启动GeoLDM模型训练 - 骨架约束分子生成${NC}"
+echo -e "${GREEN}启动GeoLDM模型训练 - 片段约束分子生成${NC}"
 echo -e "${YELLOW}实验名称:${NC} $EXP_NAME"
 echo -e "${YELLOW}掩码策略:${NC} $MASK_STRATEGY"
 echo -e "${YELLOW}噪声比例:${NC} $NOISE_RATIO"

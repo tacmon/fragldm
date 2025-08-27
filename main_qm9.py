@@ -98,7 +98,7 @@ parser.add_argument('--dequantization', type=str, default='argmax_variational',
 parser.add_argument('--n_report_steps', type=int, default=1)
 parser.add_argument('--wandb_usr', type=str)
 parser.add_argument('--no_wandb', action='store_true', help='Disable wandb')
-parser.add_argument('--online', type=bool, default=True, help='True = wandb online -- False = wandb offline')
+parser.add_argument('--online', type=str, default='True', choices=['True', 'False'], help='True = wandb online -- False = wandb offline')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
 parser.add_argument('--save_model', type=eval, default=True,
@@ -163,7 +163,7 @@ if args.resume is not None:
     aggregation_method = args.aggregation_method
     num_workers = args.num_workers  # 保存当前命令行指定的num_workers值
     no_wandb = args.no_wandb
-    online = args.online
+    online = args.online == 'True'
     noise_ratio = args.noise_ratio
     arg_dataset = args.dataset
 
@@ -179,7 +179,7 @@ if args.resume is not None:
     args.wandb_usr = wandb_usr
     args.num_workers = num_workers  # 确保使用当前命令行指定的num_workers值
     args.no_wandb = no_wandb
-    args.online = online
+    args.online = 'True' if online else 'False'
     args.noise_ratio = noise_ratio
     args.dataset = arg_dataset
     args.normalize_factors = normalize_factors
@@ -200,7 +200,7 @@ utils.create_folders(args)
 if args.no_wandb:
     mode = 'disabled'
 else:
-    mode = 'online' if args.online else 'offline'
+    mode = 'online' if args.online == 'True' else 'offline'
 kwargs = {'entity': args.wandb_usr, 'name': args.exp_name, 'project': 'e3_diffusion_qm9', 'config': args,
           'settings': wandb.Settings(_disable_stats=True), 'reinit': True, 'mode': mode}
 wandb.init(**kwargs)

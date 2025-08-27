@@ -109,7 +109,7 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
             for b in range(batch_size):
                 for u in range(n_nodes):
                     for v in range(n_nodes):
-                        if condition_mask[b, v, 0] == 1 or noise_mask[b, u, 0] == 1:
+                        if (condition_mask[b, v, 0] == 1 or noise_mask[b, u, 0] == 1) and u != v:
                             edge_mask[b, u, v] = 1
             edge_mask = edge_mask.view(batch_size * n_nodes * n_nodes, 1)
 
