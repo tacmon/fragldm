@@ -163,6 +163,7 @@ if args.resume is not None:
     aggregation_method = args.aggregation_method
     num_workers = args.num_workers  # 保存当前命令行指定的num_workers值
     no_wandb = args.no_wandb
+    online = args.online
     noise_ratio = args.noise_ratio
     arg_dataset = args.dataset
 
@@ -178,6 +179,7 @@ if args.resume is not None:
     args.wandb_usr = wandb_usr
     args.num_workers = num_workers  # 确保使用当前命令行指定的num_workers值
     args.no_wandb = no_wandb
+    args.online = online
     args.noise_ratio = noise_ratio
     args.dataset = arg_dataset
     args.normalize_factors = normalize_factors

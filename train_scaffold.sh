@@ -50,6 +50,6 @@ python main_qm9.py \
   --mask_strategy $MASK_STRATEGY \
   --num_workers $NUM_WORKERS \
   --break_train_epoch False \
-  --no_wandb
+  --online False
 
 echo -e "${GREEN}训练完成!${NC}" 
