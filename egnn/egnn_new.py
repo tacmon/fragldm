@@ -195,17 +195,22 @@ class EGNN(nn.Module):
         self.to(self.device)
 
     def forward(self, h, x, edge_index, node_mask=None, edge_mask=None):
-        edge_index[0] = edge_index[0][edge_mask.view(-1) == 1]
-        edge_index[1] = edge_index[1][edge_mask.view(-1) == 1]
-        assert(len(edge_mask.shape) == 2 and edge_mask.shape[1] == 1)
-        edge_mask = torch.ones((int(edge_mask.sum(dim=0)[0]), 1), device=edge_mask.device)
+        # edge_index[0] = edge_index[0][edge_mask.view(-1) == 1]
+        # edge_index[1] = edge_index[1][edge_mask.view(-1) == 1]
+        # assert(len(edge_mask.shape) == 2 and edge_mask.shape[1] == 1)
+        # edge_mask = torch.ones((int(edge_mask.sum(dim=0)[0]), 1), device=edge_mask.device)
+        edge_index_new = edge_index.clone()
+        edge_mask_new = edge_mask.clone()
+        edge_index_new[0] = edge_index_new[0][edge_mask_new.view(-1) == 1]
+        edge_index_new[1] = edge_index_new[1][edge_mask_new.view(-1) == 1]
+        edge_mask_new = torch.ones((int(edge_mask_new.sum(dim=0)[0]), 1), device=edge_mask_new.device)
         # Edit Emiel: Remove velocity as input
-        distances, _ = coord2diff(x, edge_index)
+        distances, _ = coord2diff(x, edge_index_new)
         if self.sin_embedding is not None:
             distances = self.sin_embedding(distances)
         h = self.embedding(h)
         for i in range(0, self.n_layers):
-            h, x = self._modules["e_block_%d" % i](h, x, edge_index, node_mask=node_mask, edge_mask=edge_mask, edge_attr=distances)
+            h, x = self._modules["e_block_%d" % i](h, x, edge_index_new, node_mask=node_mask, edge_mask=edge_mask_new, edge_attr=distances)
 
         # Important, the bias of the last linear might be non-zero
         h = self.embedding_out(h)
