@@ -199,7 +199,7 @@ class EGNN(nn.Module):
         # edge_index[1] = edge_index[1][edge_mask.view(-1) == 1]
         # assert(len(edge_mask.shape) == 2 and edge_mask.shape[1] == 1)
         # edge_mask = torch.ones((int(edge_mask.sum(dim=0)[0]), 1), device=edge_mask.device)
-        edge_index_new = edge_index.clone()
+        edge_index_new = [edge_index[0].clone(), edge_index[1].clone()]
         edge_mask_new = edge_mask.clone()
         edge_index_new[0] = edge_index_new[0][edge_mask_new.view(-1) == 1]
         edge_index_new[1] = edge_index_new[1][edge_mask_new.view(-1) == 1]

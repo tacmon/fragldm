@@ -1,0 +1,56 @@
+训练开始时间: Thu Aug 28 02:42:54 UTC 2025
+Wandb离线模式已启用，日志将保存在: wandb_offline_logs/fragldm_base_20250828_024254
+wandb: WARNING Path wandb_offline_logs/fragldm_base_20250828_024254/wandb/ wasn't writable, using system temp directory.
+wandb: Using wandb-core as the SDK backend.  Please refer to https://wandb.me/wandb-core for more information.
+wandb: Tracking run with wandb version 0.19.7
+wandb: W&B syncing is set to `offline` in this directory.  
+wandb: Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: WARNING Symlinked 1 file into the W&B run directory, call wandb.save again to sync new files.
+Entropy of n_nodes: H[N] -2.475700616836548
+Autoencoder models are _not_ conditioned on time.
+alphas2 [9.99990000e-01 9.99988000e-01 9.99982000e-01 ... 2.59676966e-05
+ 1.39959211e-05 1.00039959e-05]
+gamma [-11.51291546 -11.33059532 -10.92513058 ...  10.55863126  11.17673063
+  11.51251595]
+
+==================================================
+训练配置:
+- 模型: egnn_dynamics
+- 数据集: qm9
+- 条件: 无
+- 部分条件化: 已启用
+  - 噪声比例: 0.8
+  - 掩码策略: connected
+==================================================
+
+Traceback (most recent call last):
+  File "/app/data/fragldm/main_qm9.py", line 372, in <module>
+    main()
+  File "/app/data/fragldm/main_qm9.py", line 304, in main
+    train_epoch(args=args, loader=dataloaders['train'], epoch=epoch, model=model, model_dp=model_dp,
+  File "/app/data/fragldm/train_test.py", line 142, in train_epoch
+    nll, reg_term, mean_abs_z = losses.compute_loss_and_nll(args, model_dp, nodes_dist,
+  File "/app/data/fragldm/qm9/losses.py", line 31, in compute_loss_and_nll
+    nll = generative_model(x, h, node_mask, edge_mask, context, noise_mask, condition_mask)
+  File "/home/miniconda3/envs/geoldm/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/miniconda3/envs/geoldm/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/app/data/fragldm/equivariant_diffusion/en_diffusion.py", line 1355, in forward
+    z_x_mu, z_x_sigma, z_h_mu, z_h_sigma = self.vae.encode(x, h, node_mask, edge_mask, context)
+  File "/app/data/fragldm/equivariant_diffusion/en_diffusion.py", line 1224, in encode
+    z_x_mu, z_x_sigma, z_h_mu, z_h_sigma = self.encoder._forward(xh, node_mask, edge_mask, context)
+  File "/app/data/fragldm/egnn/models.py", line 216, in _forward
+    h_final, x_final = self.egnn(h, x, edges, node_mask=node_mask, edge_mask=edge_mask)
+  File "/home/miniconda3/envs/geoldm/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/miniconda3/envs/geoldm/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/app/data/fragldm/egnn/egnn_new.py", line 202, in forward
+    edge_index_new = edge_index.clone()
+AttributeError: 'list' object has no attribute 'clone'
+[1;34mwandb[0m: 
+[1;34mwandb[0m: You can sync this run to the cloud by running:
+[1;34mwandb[0m: [1mwandb sync /tmp/wandb/offline-run-20250828_024259-njpab8wp[0m
+[1;34mwandb[0m: Find logs at: [1;35m../../../tmp/wandb/offline-run-20250828_024259-njpab8wp/logs[0m
+训练结束时间: Thu Aug 28 02:43:02 UTC 2025

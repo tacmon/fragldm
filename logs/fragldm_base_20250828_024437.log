@@ -1,0 +1,183 @@
+训练开始时间: Thu Aug 28 02:44:37 UTC 2025
+Wandb离线模式已启用，日志将保存在: wandb_offline_logs/fragldm_base_20250828_024437
+wandb: WARNING Path wandb_offline_logs/fragldm_base_20250828_024437/wandb/ wasn't writable, using system temp directory.
+wandb: Using wandb-core as the SDK backend.  Please refer to https://wandb.me/wandb-core for more information.
+wandb: Tracking run with wandb version 0.19.7
+wandb: W&B syncing is set to `offline` in this directory.  
+wandb: Run `wandb online` or set WANDB_MODE=online to enable cloud syncing.
+wandb: WARNING Symlinked 3 files into the W&B run directory, call wandb.save again to sync new files.
+Entropy of n_nodes: H[N] -2.475700616836548
+Autoencoder models are _not_ conditioned on time.
+alphas2 [9.99990000e-01 9.99988000e-01 9.99982000e-01 ... 2.59676966e-05
+ 1.39959211e-05 1.00039959e-05]
+gamma [-11.51291546 -11.33059532 -10.92513058 ...  10.55863126  11.17673063
+  11.51251595]
+
+==================================================
+训练配置:
+- 模型: egnn_dynamics
+- 数据集: qm9
+- 条件: 无
+- 部分条件化: 已启用
+  - 噪声比例: 0.8
+  - 掩码策略: connected
+==================================================
+
+Epoch: 0, iter: 0/12500, Loss 4.96, NLL: 4.96, RegTerm: 0.0, GradNorm: 124.8 | Cond: 0.22, Noise: 0.78
+Clipped gradient with value 19013.0 while allowed 5218.8
+Epoch: 0, iter: 1/12500, Loss 11.36, NLL: 11.36, RegTerm: 0.0, GradNorm: 19013.0 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 2/12500, Loss 4.00, NLL: 4.00, RegTerm: 0.0, GradNorm: 101.7 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 3/12500, Loss 4.09, NLL: 4.09, RegTerm: 0.0, GradNorm: 66.1 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 4/12500, Loss 4.08, NLL: 4.08, RegTerm: 0.0, GradNorm: 93.2 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 5/12500, Loss 3.85, NLL: 3.85, RegTerm: 0.0, GradNorm: 97.4 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 6/12500, Loss 3.81, NLL: 3.81, RegTerm: 0.0, GradNorm: 92.9 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 7/12500, Loss 3.95, NLL: 3.95, RegTerm: 0.0, GradNorm: 90.9 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 8/12500, Loss 4.10, NLL: 4.10, RegTerm: 0.0, GradNorm: 85.9 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 9/12500, Loss 3.60, NLL: 3.60, RegTerm: 0.0, GradNorm: 88.9 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 10/12500, Loss 3.62, NLL: 3.62, RegTerm: 0.0, GradNorm: 33.3 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 11/12500, Loss 3.57, NLL: 3.57, RegTerm: 0.0, GradNorm: 19.9 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 12/12500, Loss 3.88, NLL: 3.88, RegTerm: 0.0, GradNorm: 34.3 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 13/12500, Loss 3.78, NLL: 3.78, RegTerm: 0.0, GradNorm: 53.2 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 14/12500, Loss 3.41, NLL: 3.41, RegTerm: 0.0, GradNorm: 62.0 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 15/12500, Loss 3.55, NLL: 3.55, RegTerm: 0.0, GradNorm: 72.6 | Cond: 0.21, Noise: 0.79
+Epoch: 0, iter: 16/12500, Loss 4.01, NLL: 4.01, RegTerm: 0.0, GradNorm: 27.4 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 17/12500, Loss 3.55, NLL: 3.55, RegTerm: 0.0, GradNorm: 20.8 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 18/12500, Loss 3.44, NLL: 3.44, RegTerm: 0.0, GradNorm: 9.3 | Cond: 0.21, Noise: 0.79
+Epoch: 0, iter: 19/12500, Loss 3.41, NLL: 3.41, RegTerm: 0.0, GradNorm: 113.3 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 20/12500, Loss 3.40, NLL: 3.40, RegTerm: 0.0, GradNorm: 16.6 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 21/12500, Loss 3.12, NLL: 3.12, RegTerm: 0.0, GradNorm: 19.1 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 22/12500, Loss 3.52, NLL: 3.52, RegTerm: 0.0, GradNorm: 19.6 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 23/12500, Loss 3.34, NLL: 3.34, RegTerm: 0.0, GradNorm: 13.1 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 24/12500, Loss 3.20, NLL: 3.20, RegTerm: 0.0, GradNorm: 24.5 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 25/12500, Loss 3.41, NLL: 3.41, RegTerm: 0.0, GradNorm: 20.9 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 26/12500, Loss 3.20, NLL: 3.20, RegTerm: 0.0, GradNorm: 11.8 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 27/12500, Loss 3.25, NLL: 3.25, RegTerm: 0.0, GradNorm: 12.0 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 28/12500, Loss 3.44, NLL: 3.44, RegTerm: 0.0, GradNorm: 8.2 | Cond: 0.21, Noise: 0.79
+Epoch: 0, iter: 29/12500, Loss 3.24, NLL: 3.24, RegTerm: 0.0, GradNorm: 8.4 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 30/12500, Loss 3.18, NLL: 3.18, RegTerm: 0.0, GradNorm: 6.8 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 31/12500, Loss 3.49, NLL: 3.49, RegTerm: 0.0, GradNorm: 8.4 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 32/12500, Loss 3.50, NLL: 3.50, RegTerm: 0.0, GradNorm: 7.8 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 33/12500, Loss 3.04, NLL: 3.04, RegTerm: 0.0, GradNorm: 11.0 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 34/12500, Loss 3.36, NLL: 3.36, RegTerm: 0.0, GradNorm: 5.9 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 35/12500, Loss 3.70, NLL: 3.70, RegTerm: 0.0, GradNorm: 8.8 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 36/12500, Loss 3.65, NLL: 3.65, RegTerm: 0.0, GradNorm: 14.7 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 37/12500, Loss 3.46, NLL: 3.46, RegTerm: 0.0, GradNorm: 13.6 | Cond: 0.21, Noise: 0.79
+Epoch: 0, iter: 38/12500, Loss 3.31, NLL: 3.31, RegTerm: 0.0, GradNorm: 6.6 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 39/12500, Loss 2.99, NLL: 2.99, RegTerm: 0.0, GradNorm: 8.4 | Cond: 0.24, Noise: 0.76
+Epoch: 0, iter: 40/12500, Loss 3.14, NLL: 3.14, RegTerm: 0.0, GradNorm: 6.8 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 41/12500, Loss 3.34, NLL: 3.34, RegTerm: 0.0, GradNorm: 9.6 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 42/12500, Loss 3.05, NLL: 3.05, RegTerm: 0.0, GradNorm: 11.1 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 43/12500, Loss 3.36, NLL: 3.36, RegTerm: 0.0, GradNorm: 10.0 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 44/12500, Loss 2.97, NLL: 2.97, RegTerm: 0.0, GradNorm: 5.2 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 45/12500, Loss 3.04, NLL: 3.04, RegTerm: 0.0, GradNorm: 14.1 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 46/12500, Loss 3.13, NLL: 3.13, RegTerm: 0.0, GradNorm: 9.7 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 47/12500, Loss 2.94, NLL: 2.94, RegTerm: 0.0, GradNorm: 4.8 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 48/12500, Loss 2.86, NLL: 2.86, RegTerm: 0.0, GradNorm: 5.4 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 49/12500, Loss 3.24, NLL: 3.24, RegTerm: 0.0, GradNorm: 7.7 | Cond: 0.21, Noise: 0.79
+Epoch: 0, iter: 50/12500, Loss 2.75, NLL: 2.75, RegTerm: 0.0, GradNorm: 7.5 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 51/12500, Loss 3.10, NLL: 3.10, RegTerm: 0.0, GradNorm: 12.6 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 52/12500, Loss 2.81, NLL: 2.81, RegTerm: 0.0, GradNorm: 8.9 | Cond: 0.21, Noise: 0.79
+Epoch: 0, iter: 53/12500, Loss 3.35, NLL: 3.35, RegTerm: 0.0, GradNorm: 3.8 | Cond: 0.21, Noise: 0.79
+Epoch: 0, iter: 54/12500, Loss 2.70, NLL: 2.70, RegTerm: 0.0, GradNorm: 7.8 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 55/12500, Loss 3.60, NLL: 3.60, RegTerm: 0.0, GradNorm: 4.6 | Cond: 0.24, Noise: 0.76
+Epoch: 0, iter: 56/12500, Loss 2.72, NLL: 2.72, RegTerm: 0.0, GradNorm: 5.7 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 57/12500, Loss 2.60, NLL: 2.60, RegTerm: 0.0, GradNorm: 4.7 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 58/12500, Loss 2.68, NLL: 2.68, RegTerm: 0.0, GradNorm: 8.7 | Cond: 0.21, Noise: 0.79
+Epoch: 0, iter: 59/12500, Loss 3.23, NLL: 3.23, RegTerm: 0.0, GradNorm: 5.3 | Cond: 0.24, Noise: 0.76
+Epoch: 0, iter: 60/12500, Loss 2.56, NLL: 2.56, RegTerm: 0.0, GradNorm: 7.7 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 61/12500, Loss 2.64, NLL: 2.64, RegTerm: 0.0, GradNorm: 5.5 | Cond: 0.21, Noise: 0.79
+Epoch: 0, iter: 62/12500, Loss 2.79, NLL: 2.79, RegTerm: 0.0, GradNorm: 5.3 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 63/12500, Loss 2.88, NLL: 2.88, RegTerm: 0.0, GradNorm: 8.6 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 64/12500, Loss 3.02, NLL: 3.02, RegTerm: 0.0, GradNorm: 10.4 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 65/12500, Loss 2.62, NLL: 2.62, RegTerm: 0.0, GradNorm: 10.8 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 66/12500, Loss 2.92, NLL: 2.92, RegTerm: 0.0, GradNorm: 10.5 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 67/12500, Loss 2.65, NLL: 2.65, RegTerm: 0.0, GradNorm: 7.0 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 68/12500, Loss 3.08, NLL: 3.08, RegTerm: 0.0, GradNorm: 5.7 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 69/12500, Loss 3.81, NLL: 3.81, RegTerm: 0.0, GradNorm: 34.5 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 70/12500, Loss 3.14, NLL: 3.14, RegTerm: 0.0, GradNorm: 7.1 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 71/12500, Loss 3.00, NLL: 3.00, RegTerm: 0.0, GradNorm: 6.2 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 72/12500, Loss 2.95, NLL: 2.95, RegTerm: 0.0, GradNorm: 9.9 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 73/12500, Loss 2.54, NLL: 2.54, RegTerm: 0.0, GradNorm: 8.2 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 74/12500, Loss 2.72, NLL: 2.72, RegTerm: 0.0, GradNorm: 9.6 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 75/12500, Loss 3.03, NLL: 3.03, RegTerm: 0.0, GradNorm: 4.1 | Cond: 0.21, Noise: 0.79
+Epoch: 0, iter: 76/12500, Loss 2.78, NLL: 2.78, RegTerm: 0.0, GradNorm: 4.9 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 77/12500, Loss 2.74, NLL: 2.74, RegTerm: 0.0, GradNorm: 6.4 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 78/12500, Loss 2.98, NLL: 2.98, RegTerm: 0.0, GradNorm: 8.5 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 79/12500, Loss 3.24, NLL: 3.24, RegTerm: 0.0, GradNorm: 11.3 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 80/12500, Loss 2.63, NLL: 2.63, RegTerm: 0.0, GradNorm: 3.3 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 81/12500, Loss 2.52, NLL: 2.52, RegTerm: 0.0, GradNorm: 5.8 | Cond: 0.24, Noise: 0.76
+Epoch: 0, iter: 82/12500, Loss 2.55, NLL: 2.55, RegTerm: 0.0, GradNorm: 5.2 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 83/12500, Loss 2.43, NLL: 2.43, RegTerm: 0.0, GradNorm: 8.2 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 84/12500, Loss 2.88, NLL: 2.88, RegTerm: 0.0, GradNorm: 3.7 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 85/12500, Loss 2.52, NLL: 2.52, RegTerm: 0.0, GradNorm: 6.9 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 86/12500, Loss 2.66, NLL: 2.66, RegTerm: 0.0, GradNorm: 4.5 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 87/12500, Loss 2.93, NLL: 2.93, RegTerm: 0.0, GradNorm: 4.5 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 88/12500, Loss 2.54, NLL: 2.54, RegTerm: 0.0, GradNorm: 5.2 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 89/12500, Loss 2.59, NLL: 2.59, RegTerm: 0.0, GradNorm: 8.7 | Cond: 0.24, Noise: 0.76
+Epoch: 0, iter: 90/12500, Loss 2.72, NLL: 2.72, RegTerm: 0.0, GradNorm: 3.8 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 91/12500, Loss 3.18, NLL: 3.18, RegTerm: 0.0, GradNorm: 17.1 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 92/12500, Loss 2.90, NLL: 2.90, RegTerm: 0.0, GradNorm: 3.6 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 93/12500, Loss 2.41, NLL: 2.41, RegTerm: 0.0, GradNorm: 2.8 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 94/12500, Loss 2.79, NLL: 2.79, RegTerm: 0.0, GradNorm: 2.7 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 95/12500, Loss 2.56, NLL: 2.56, RegTerm: 0.0, GradNorm: 7.2 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 96/12500, Loss 3.20, NLL: 3.20, RegTerm: 0.0, GradNorm: 4.7 | Cond: 0.24, Noise: 0.76
+Epoch: 0, iter: 97/12500, Loss 2.45, NLL: 2.45, RegTerm: 0.0, GradNorm: 3.6 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 98/12500, Loss 2.63, NLL: 2.63, RegTerm: 0.0, GradNorm: 15.2 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 99/12500, Loss 2.76, NLL: 2.76, RegTerm: 0.0, GradNorm: 4.6 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 100/12500, Loss 2.44, NLL: 2.44, RegTerm: 0.0, GradNorm: 3.3 | Cond: 0.21, Noise: 0.79
+Epoch: 0, iter: 101/12500, Loss 2.62, NLL: 2.62, RegTerm: 0.0, GradNorm: 5.4 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 102/12500, Loss 2.79, NLL: 2.79, RegTerm: 0.0, GradNorm: 4.8 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 103/12500, Loss 2.81, NLL: 2.81, RegTerm: 0.0, GradNorm: 4.2 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 104/12500, Loss 2.84, NLL: 2.84, RegTerm: 0.0, GradNorm: 4.2 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 105/12500, Loss 2.60, NLL: 2.60, RegTerm: 0.0, GradNorm: 2.9 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 106/12500, Loss 2.76, NLL: 2.76, RegTerm: 0.0, GradNorm: 4.8 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 107/12500, Loss 2.73, NLL: 2.73, RegTerm: 0.0, GradNorm: 8.6 | Cond: 0.21, Noise: 0.79
+Epoch: 0, iter: 108/12500, Loss 2.42, NLL: 2.42, RegTerm: 0.0, GradNorm: 4.1 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 109/12500, Loss 2.70, NLL: 2.70, RegTerm: 0.0, GradNorm: 2.7 | Cond: 0.22, Noise: 0.78
+Clipped gradient with value 35.1 while allowed 20.4
+Epoch: 0, iter: 110/12500, Loss 2.82, NLL: 2.82, RegTerm: 0.0, GradNorm: 35.1 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 111/12500, Loss 2.85, NLL: 2.85, RegTerm: 0.0, GradNorm: 3.7 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 112/12500, Loss 2.69, NLL: 2.69, RegTerm: 0.0, GradNorm: 3.8 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 113/12500, Loss 2.74, NLL: 2.74, RegTerm: 0.0, GradNorm: 2.9 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 114/12500, Loss 2.68, NLL: 2.68, RegTerm: 0.0, GradNorm: 3.4 | Cond: 0.21, Noise: 0.79
+Epoch: 0, iter: 115/12500, Loss 2.82, NLL: 2.82, RegTerm: 0.0, GradNorm: 12.8 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 116/12500, Loss 2.66, NLL: 2.66, RegTerm: 0.0, GradNorm: 2.5 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 117/12500, Loss 3.09, NLL: 3.09, RegTerm: 0.0, GradNorm: 2.6 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 118/12500, Loss 2.75, NLL: 2.75, RegTerm: 0.0, GradNorm: 3.8 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 119/12500, Loss 3.05, NLL: 3.05, RegTerm: 0.0, GradNorm: 5.9 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 120/12500, Loss 2.89, NLL: 2.89, RegTerm: 0.0, GradNorm: 5.8 | Cond: 0.21, Noise: 0.79
+Epoch: 0, iter: 121/12500, Loss 3.15, NLL: 3.15, RegTerm: 0.0, GradNorm: 11.2 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 122/12500, Loss 2.66, NLL: 2.66, RegTerm: 0.0, GradNorm: 1.6 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 123/12500, Loss 2.86, NLL: 2.86, RegTerm: 0.0, GradNorm: 3.2 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 124/12500, Loss 2.46, NLL: 2.46, RegTerm: 0.0, GradNorm: 2.5 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 125/12500, Loss 2.53, NLL: 2.53, RegTerm: 0.0, GradNorm: 2.8 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 126/12500, Loss 2.64, NLL: 2.64, RegTerm: 0.0, GradNorm: 8.4 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 127/12500, Loss 3.47, NLL: 3.47, RegTerm: 0.0, GradNorm: 6.0 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 128/12500, Loss 2.63, NLL: 2.63, RegTerm: 0.0, GradNorm: 9.7 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 129/12500, Loss 2.48, NLL: 2.48, RegTerm: 0.0, GradNorm: 2.9 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 130/12500, Loss 2.93, NLL: 2.93, RegTerm: 0.0, GradNorm: 4.9 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 131/12500, Loss 2.68, NLL: 2.68, RegTerm: 0.0, GradNorm: 11.5 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 132/12500, Loss 2.82, NLL: 2.82, RegTerm: 0.0, GradNorm: 2.6 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 133/12500, Loss 2.84, NLL: 2.84, RegTerm: 0.0, GradNorm: 4.7 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 134/12500, Loss 2.76, NLL: 2.76, RegTerm: 0.0, GradNorm: 3.6 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 135/12500, Loss 2.39, NLL: 2.39, RegTerm: 0.0, GradNorm: 12.6 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 136/12500, Loss 2.55, NLL: 2.55, RegTerm: 0.0, GradNorm: 6.3 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 137/12500, Loss 2.61, NLL: 2.61, RegTerm: 0.0, GradNorm: 6.5 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 138/12500, Loss 2.43, NLL: 2.43, RegTerm: 0.0, GradNorm: 4.1 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 139/12500, Loss 2.65, NLL: 2.65, RegTerm: 0.0, GradNorm: 2.6 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 140/12500, Loss 2.79, NLL: 2.79, RegTerm: 0.0, GradNorm: 8.5 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 141/12500, Loss 2.68, NLL: 2.68, RegTerm: 0.0, GradNorm: 4.1 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 142/12500, Loss 2.86, NLL: 2.86, RegTerm: 0.0, GradNorm: 2.1 | Cond: 0.24, Noise: 0.76
+Epoch: 0, iter: 143/12500, Loss 2.55, NLL: 2.55, RegTerm: 0.0, GradNorm: 3.0 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 144/12500, Loss 2.65, NLL: 2.65, RegTerm: 0.0, GradNorm: 4.2 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 145/12500, Loss 2.51, NLL: 2.51, RegTerm: 0.0, GradNorm: 4.4 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 146/12500, Loss 2.39, NLL: 2.39, RegTerm: 0.0, GradNorm: 6.4 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 147/12500, Loss 3.39, NLL: 3.39, RegTerm: 0.0, GradNorm: 3.4 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 148/12500, Loss 3.26, NLL: 3.26, RegTerm: 0.0, GradNorm: 3.9 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 149/12500, Loss 3.10, NLL: 3.10, RegTerm: 0.0, GradNorm: 12.7 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 150/12500, Loss 2.54, NLL: 2.54, RegTerm: 0.0, GradNorm: 7.2 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 151/12500, Loss 2.53, NLL: 2.53, RegTerm: 0.0, GradNorm: 3.8 | Cond: 0.21, Noise: 0.79
+Epoch: 0, iter: 152/12500, Loss 2.42, NLL: 2.42, RegTerm: 0.0, GradNorm: 8.9 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 153/12500, Loss 2.77, NLL: 2.77, RegTerm: 0.0, GradNorm: 3.4 | Cond: 0.22, Noise: 0.78
+Epoch: 0, iter: 154/12500, Loss 2.84, NLL: 2.84, RegTerm: 0.0, GradNorm: 7.2 | Cond: 0.23, Noise: 0.77
+Epoch: 0, iter: 155/12500, Loss 2.37, NLL: 2.37, RegTerm: 0.0, GradNorm: 7.2 | Cond: 0.23, Noise: 0.77

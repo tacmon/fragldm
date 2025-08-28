@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # 设置可调整的参数（可根据需要修改）
-EXP_NAME="fragldm_base"
+EXP_NAME="base"
 N_EPOCHS=3000
-BATCH_SIZE=8
+BATCH_SIZE=16
 TEST_EPOCHS=20
 NOISE_RATIO=0.8
 MASK_STRATEGY="connected"  # 可选: "random", "connected", "central", "peripheral"
-NUM_WORKERS=8  # 数据加载并行进程数
+NUM_WORKERS=16  # 数据加载并行进程数
 # RESUME_PATH="./outputs/${EXP_NAME}_resume"
 # START_EPOCH=243  # 从210个epoch开始续训
 
@@ -50,6 +50,6 @@ python main_qm9.py \
   --mask_strategy $MASK_STRATEGY \
   --num_workers $NUM_WORKERS \
   --break_train_epoch False \
-  --online False
+  --online True
 
 echo -e "${GREEN}训练完成!${NC}" 
