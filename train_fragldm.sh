@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # 设置可调整的参数（可根据需要修改）
-EXP_NAME="base"
+EXP_NAME="local_container_test_first_epoch"
 N_EPOCHS=3000
 BATCH_SIZE=16
-TEST_EPOCHS=20
+TEST_EPOCHS=1
 NOISE_RATIO=0.8
 MASK_STRATEGY="connected"  # 可选: "random", "connected", "central", "peripheral"
-NUM_WORKERS=16  # 数据加载并行进程数
+NUM_WORKERS=16 # 数据加载并行进程数
 # RESUME_PATH="./outputs/${EXP_NAME}_resume"
 # START_EPOCH=243  # 从210个epoch开始续训
 
