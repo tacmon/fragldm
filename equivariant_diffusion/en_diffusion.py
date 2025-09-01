@@ -937,7 +937,7 @@ class EnVariationalDiffusion(torch.nn.Module):
             # x, h = self.vae.decode(z_xh, node_mask, edge_mask, context)
             if s % 100 == 0:
                 draw_xh.append(z)
-                print(z[:, :condition_x.size(1), :] - torch.cat([condition_x, condition_h], dim=2))
+                # print(z[:, :condition_x.size(1), :] - torch.cat([condition_x, condition_h], dim=2))
 
         # Finally sample p(x, h | z_0).
         x, h = self.sample_p_xh_given_z0(z, node_mask, edge_mask, context, fix_noise=fix_noise, noise_mask=noise_mask, condition_mask=condition_mask)

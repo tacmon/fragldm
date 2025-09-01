@@ -155,158 +155,159 @@ def sample(args, device, generative_model, dataset_info,
 
 
 def sample_scaf(args, device, generative_model, dataset_info,
-                prop_dist=None, nodesxsample=torch.tensor([10]), context=None,
-                fix_noise=False, loader=None, dtype=None, mask_func=None, property_norms=None):
-    for i, data in enumerate(loader):
-        x = data['positions'].to(device, dtype)
-        batch_size = x.size(0)
-        node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
-        edge_mask = data['edge_mask'].to(device, dtype)
-        edge_mask = edge_mask.view(batch_size, -1)
-        one_hot = data['one_hot'].to(device, dtype)
-        charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
+                prop_dist=None, nodesxsample=torch.tensor([29]), context=None,
+                fix_noise=False, data=None, dtype=None, mask_func=None, property_norms=None):
+    x = data['positions'].to(device, dtype)
+    batch_size = x.size(0)
+    node_mask = data['atom_mask'].to(device, dtype).unsqueeze(2)
+    edge_mask = data['edge_mask'].to(device, dtype)
+    edge_mask = edge_mask.view(batch_size, -1)
+    one_hot = data['one_hot'].to(device, dtype)
+    charges = (data['charges'] if args.include_charges else torch.zeros(0)).to(device, dtype)
 
-        batch_size = 1
-        n_nodes = node_mask.size(1)
-        x = x[:batch_size]
-        node_mask = node_mask[:batch_size]
-        edge_mask = edge_mask[:batch_size]
-        one_hot = one_hot[:batch_size]
-        charges = charges[:batch_size]
+    batch_size = 1
+    n_nodes = node_mask.size(1)
+    x = x[:batch_size]
+    node_mask = node_mask[:batch_size]
+    edge_mask = edge_mask[:batch_size]
+    one_hot = one_hot[:batch_size]
+    charges = charges[:batch_size]
 
-        if args.augment_noise > 0:
-            # Add noise eps ~ N(0, augment_noise) around points.
-            eps = sample_center_gravity_zero_gaussian_with_mask(x.size(),
-                                                                x.device,
-                                                                node_mask)
-            x = x + eps * args.augment_noise
+    if args.augment_noise > 0:
+        # Add noise eps ~ N(0, augment_noise) around points.
+        eps = sample_center_gravity_zero_gaussian_with_mask(x.size(),
+                                                            x.device,
+                                                            node_mask)
+        x = x + eps * args.augment_noise
 
-        x = remove_mean_with_mask(x, node_mask)
-        # check_mask_correct([x, one_hot, charges], node_mask)
-        # assert_mean_zero_with_mask(x, node_mask)
-        h = {'categorical': one_hot, 'integer': charges}
+    x = remove_mean_with_mask(x, node_mask)
+    # check_mask_correct([x, one_hot, charges], node_mask)
+    # assert_mean_zero_with_mask(x, node_mask)
+    h = {'categorical': one_hot, 'integer': charges}
 
-        # 获取原始上下文条件
-        # if len(args.conditioning) > 0:
-        #     if context is None:
-        #         context = prop_dist.sample_batch(nodesxsample)
-        #     context = context.unsqueeze(1).repeat(1, x.shape[1], 1).to(device) * node_mask
-        # else:
-        #     context = None
-        if len(args.conditioning) > 0:
-            assert property_norms is not None
-            context = qm9utils.prepare_context(args.conditioning, data, property_norms).to(device, dtype)
-            assert_correctly_masked(context, node_mask)
-        else:
-            context = None
-            
-        if args.partial_conditioning:
-            # 使用固定的随机种子来保证测试的一致性
-            test_seed = None
-            
-            # 根据策略生成掩码
-            if args.mask_strategy == "connected":
-                # 使用连通掩码生成
-                noise_mask, condition_mask = mask_func(
-                    x, node_mask, noise_ratio=args.noise_ratio, random_seed=test_seed)
-            else:
-                # 使用其他策略
-                from mask_utils import generate_mask_by_strategy, get_condition_mask
-                noise_mask = generate_mask_by_strategy(
-                    x, h['categorical'], node_mask.squeeze(2), 
-                    strategy=args.mask_strategy, 
-                    noise_ratio=args.noise_ratio,
-                    random_seed=test_seed)
-                # 根据噪声掩码获取条件掩码
-                condition_mask = get_condition_mask(node_mask.squeeze(2), noise_mask).unsqueeze(2)
-                noise_mask = noise_mask.unsqueeze(2)
-
-            edge_mask = torch.zeros((batch_size, n_nodes, n_nodes), device=device, dtype=dtype)
-            for i in range(batch_size):
-                for u in range(n_nodes):
-                    for v in range(n_nodes):
-                        if condition_mask[i, v, 0] == 1 or noise_mask[i, u, 0] == 1:
-                            edge_mask[i, u, v] = 1
-            edge_mask = edge_mask.view(batch_size * n_nodes * n_nodes, 1)
-
-            scaf_x_0 = x[0].cpu()
-            scaf_h_0 = torch.argmax(h['categorical'][0], dim=1).cpu()
-            scaf_x = []
-            scaf_h = []
-            encode_scaf_x = []
-            encode_scaf_h = {'categorical': [], 'integer': []}
-            for __ in range(scaf_x_0.shape[0]):
-                if condition_mask[0, __, 0] == 1:
-                    scaf_x.append([float(___) for ___ in scaf_x_0[__]])
-                    scaf_h.append(int(scaf_h_0[__]))
-                    encode_scaf_x.append([float(___) for ___ in x[0][__]])
-                    encode_scaf_h['categorical'].append([float(___) for ___ in h['categorical'][0][__]])
-                    encode_scaf_h['integer'].append([float(___) for ___ in h['integer'][0][__]])
-            scaf_x = torch.tensor(scaf_x)
-            scaf_h = torch.tensor(scaf_h)
-            encode_scaf_x = torch.tensor(encode_scaf_x)
-            encode_scaf_h['categorical'] = torch.tensor(encode_scaf_h['categorical'])
-            encode_scaf_h['integer'] = torch.tensor(encode_scaf_h['integer'])
-        else:
-            raise ValueError("args.partial_conditioning is not True")
-
-        scaf_x = scaf_x - torch.mean(scaf_x, dim=0, keepdim=True)
-        encode_scaf_x = encode_scaf_x - torch.mean(encode_scaf_x, dim=0, keepdim=True)
-        # scaf_h = scaf_h - torch.mean(scaf_h, dim=0, keepdim=True)
-        encode_scaf_x = encode_scaf_x.unsqueeze(0).to(device, dtype)
-        encode_scaf_h['categorical'] = encode_scaf_h['categorical'].unsqueeze(0).to(device, dtype)
-        encode_scaf_h['integer'] = encode_scaf_h['integer'].unsqueeze(0).to(device, dtype)
-        encode_node_mask = torch.ones((1, encode_scaf_x.shape[1], 1), device=device, dtype=dtype)
-        encode_edge_mask = torch.ones((1, encode_scaf_x.shape[1], encode_scaf_x.shape[1]), device=device, dtype=dtype)
-        for i in range(encode_scaf_x.shape[1]):
-            encode_edge_mask[0, i, i] = 0
-        encode_edge_mask = encode_edge_mask.view(1, encode_scaf_x.shape[1] * encode_scaf_x.shape[1], 1)
+    # 获取原始上下文条件
+    # if len(args.conditioning) > 0:
+    #     if context is None:
+    #         context = prop_dist.sample_batch(nodesxsample)
+    #     context = context.unsqueeze(1).repeat(1, x.shape[1], 1).to(device) * node_mask
+    # else:
+    #     context = None
+    if len(args.conditioning) > 0:
+        assert property_norms is not None
+        context = qm9utils.prepare_context(args.conditioning, data, property_norms).to(device, dtype)
+        assert_correctly_masked(context, node_mask)
+    else:
+        context = None
         
-        if context is not None:
-            context = context[:, :1, :1].repeat(1, encode_scaf_x.shape[1], 1)
-        z_x_mu, z_x_sigma, z_h_mu, z_h_sigma =  generative_model.vae.encode(encode_scaf_x, encode_scaf_h, encode_node_mask, encode_edge_mask, context)
-        # 获取编码后的潜变量表示
-        condition_x = z_x_mu
-        condition_h = z_h_mu
+    if args.partial_conditioning:
+        # 使用固定的随机种子来保证测试的一致性
+        test_seed = None
+        
+        # 根据策略生成掩码
+        if args.mask_strategy == "connected":
+            # 使用连通掩码生成
+            noise_mask, condition_mask = mask_func(
+                x, node_mask, noise_ratio=args.noise_ratio, random_seed=test_seed)
+        else:
+            # 使用其他策略
+            from mask_utils import generate_mask_by_strategy, get_condition_mask
+            noise_mask = generate_mask_by_strategy(
+                x, h['categorical'], node_mask.squeeze(2), 
+                strategy=args.mask_strategy, 
+                noise_ratio=args.noise_ratio,
+                random_seed=test_seed)
+            # 根据噪声掩码获取条件掩码
+            condition_mask = get_condition_mask(node_mask.squeeze(2), noise_mask).unsqueeze(2)
+            noise_mask = noise_mask.unsqueeze(2)
 
-        noise_mask = node_mask.clone()
-        condition_mask = torch.zeros_like(node_mask).to(device, dtype)
+        edge_mask = torch.zeros((batch_size, n_nodes, n_nodes), device=device, dtype=dtype)
         for i in range(batch_size):
-            noise_mask[i, 0:condition_x.size(1), 0] = 0
-            condition_mask[i, 0:condition_x.size(1), 0] = 1
-        # Compute edge_mask
-        edge_mask = torch.zeros((batch_size, n_nodes, n_nodes), device=device)
-        for j in range(batch_size):
             for u in range(n_nodes):
                 for v in range(n_nodes):
-                    if condition_mask[j, v, 0] == 1 or noise_mask[j, u, 0] == 1:
-                        edge_mask[j, u, v] = 1
+                    if (condition_mask[i, v, 0] == 1 or noise_mask[i, u, 0] == 1) and u != v:
+                        edge_mask[i, u, v] = 1
         edge_mask = edge_mask.view(batch_size * n_nodes * n_nodes, 1)
 
-        if args.probabilistic_model == 'diffusion':
-            x, h, draw_xh = generative_model.sample_scaf(batch_size, n_nodes, node_mask, edge_mask, context, 
-                                                         condition_x=condition_x, condition_h=condition_h, 
-                                                         noise_mask=noise_mask, condition_mask=condition_mask)
+        scaf_x_0 = x[0].cpu()
+        scaf_h_0 = torch.argmax(h['categorical'][0], dim=1).cpu()
+        scaf_x = []
+        scaf_h = []
+        encode_scaf_x = []
+        encode_scaf_h = {'categorical': [], 'integer': []}
+        for __ in range(scaf_x_0.shape[0]):
+            if condition_mask[0, __, 0] == 1:
+                scaf_x.append([float(___) for ___ in scaf_x_0[__]])
+                scaf_h.append(int(scaf_h_0[__]))
+                encode_scaf_x.append([float(___) for ___ in x[0][__]])
+                encode_scaf_h['categorical'].append([float(___) for ___ in h['categorical'][0][__]])
+                encode_scaf_h['integer'].append([float(___) for ___ in h['integer'][0][__]])
+        scaf_x = torch.tensor(scaf_x)
+        scaf_h = torch.tensor(scaf_h)
+        encode_scaf_x = torch.tensor(encode_scaf_x)
+        encode_scaf_h['categorical'] = torch.tensor(encode_scaf_h['categorical'])
+        encode_scaf_h['integer'] = torch.tensor(encode_scaf_h['integer'])
+    else:
+        raise ValueError("args.partial_conditioning is not True")
 
-            assert_correctly_masked(x, node_mask)
-            # assert_mean_zero_with_mask(x, node_mask)
+    scaf_x = scaf_x - torch.mean(scaf_x, dim=0, keepdim=True)
+    encode_scaf_x = encode_scaf_x - torch.mean(encode_scaf_x, dim=0, keepdim=True)
+    # scaf_h = scaf_h - torch.mean(scaf_h, dim=0, keepdim=True)
+    encode_scaf_x = encode_scaf_x.unsqueeze(0).to(device, dtype)
+    encode_scaf_h['categorical'] = encode_scaf_h['categorical'].unsqueeze(0).to(device, dtype)
+    encode_scaf_h['integer'] = encode_scaf_h['integer'].unsqueeze(0).to(device, dtype)
+    encode_node_mask = torch.ones((1, encode_scaf_x.shape[1], 1), device=device, dtype=dtype)
+    encode_edge_mask = torch.ones((1, encode_scaf_x.shape[1], encode_scaf_x.shape[1]), device=device, dtype=dtype)
+    for i in range(encode_scaf_x.shape[1]):
+        encode_edge_mask[0, i, i] = 0
+    encode_edge_mask = encode_edge_mask.view(1, encode_scaf_x.shape[1] * encode_scaf_x.shape[1], 1)
+    
+    if context is not None:
+        context = context[:, :1, :1].repeat(1, encode_scaf_x.shape[1], 1)
+    z_x_mu, z_x_sigma, z_h_mu, z_h_sigma =  generative_model.vae.encode(encode_scaf_x, encode_scaf_h, encode_node_mask, encode_edge_mask, context)
+    # 获取编码后的潜变量表示
+    condition_x = z_x_mu
+    condition_h = z_h_mu
 
-            one_hot = h['categorical']
-            charges = h['integer']
-            
-            draw_xh = [(xh[0].detach().cpu(), xh[1]['categorical'].detach().cpu(), xh[1]['integer'].detach().cpu()) for xh in draw_xh]
+    node_mask = torch.zeros((batch_size, nodesxsample, 1), device=device, dtype=dtype)
+    for j in range(batch_size):
+        node_mask[j, :n_nodes, 0] = 1
+    noise_mask = node_mask.clone()
+    condition_mask = torch.zeros_like(node_mask).to(device, dtype)
+    for i in range(batch_size):
+        noise_mask[i, 0:condition_x.size(1), 0] = 0
+        condition_mask[i, 0:condition_x.size(1), 0] = 1
+    # Compute edge_mask
+    edge_mask = torch.zeros((batch_size, nodesxsample, nodesxsample), device=device)
+    for j in range(batch_size):
+        for u in range(nodesxsample):
+            for v in range(nodesxsample):
+                if (condition_mask[j, v, 0] == 1 or noise_mask[j, u, 0] == 1) and u != v:
+                    edge_mask[j, u, v] = 1
+    edge_mask = edge_mask.view(batch_size * nodesxsample * nodesxsample, 1)
 
-            assert_correctly_masked(one_hot.float(), node_mask)
-            if args.include_charges:
-                assert_correctly_masked(charges.float(), node_mask)
-        else:
-            raise ValueError(args.probabilistic_model)
+    if args.probabilistic_model == 'diffusion':
+        x, h, draw_xh = generative_model.sample_scaf(batch_size, nodesxsample, node_mask, edge_mask, context, 
+                                                        condition_x=condition_x, condition_h=condition_h, 
+                                                        noise_mask=noise_mask, condition_mask=condition_mask)
 
-        one_hot = one_hot.detach().cpu()
-        x = x.detach().cpu()
-        node_mask = node_mask.detach().cpu()
-        charges = charges.detach().cpu()
-        break
+        assert_correctly_masked(x, node_mask)
+        # assert_mean_zero_with_mask(x, node_mask)
+
+        one_hot = h['categorical']
+        charges = h['integer']
+        
+        draw_xh = [(xh[0].detach().cpu(), xh[1]['categorical'].detach().cpu(), xh[1]['integer'].detach().cpu()) for xh in draw_xh]
+
+        assert_correctly_masked(one_hot.float(), node_mask)
+        if args.include_charges:
+            assert_correctly_masked(charges.float(), node_mask)
+    else:
+        raise ValueError(args.probabilistic_model)
+
+    one_hot = one_hot.detach().cpu()
+    x = x.detach().cpu()
+    node_mask = node_mask.detach().cpu()
+    charges = charges.detach().cpu()
 
     return one_hot, charges, x, node_mask, scaf_x, scaf_h, draw_xh
 

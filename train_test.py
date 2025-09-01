@@ -274,7 +274,7 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
                 for b in range(batch_size):
                     for u in range(n_nodes):
                         for v in range(n_nodes):
-                            if condition_mask[b, v, 0] == 1 or noise_mask[b, u, 0] == 1:
+                            if (condition_mask[b, v, 0] == 1 or noise_mask[b, u, 0] == 1) and u != v:
                                 edge_mask[b, u, v] = 1
                 edge_mask = edge_mask.view(batch_size * n_nodes * n_nodes, 1)
                 # transform batch through flow
@@ -406,12 +406,15 @@ def analyze_and_save_scaf(epoch, model_sample, nodes_dist, args, device, dataset
     assert n_samples % batch_size == 0
     molecules = {'one_hot': [], 'x': [], 'node_mask': []}
     have_found_stable_molecule = 0
-    for i in range(int(n_samples/batch_size)):
-        nodesxsample = nodes_dist.sample(batch_size)
+    for i, data in enumerate(loader):
+        if i == int(n_samples/batch_size):
+            break
+        # nodesxsample = nodes_dist.sample(batch_size)
+        nodesxsample = torch.tensor([29])
         # one_hot, charges, x, node_mask = sample(args, device, model_sample, dataset_info, prop_dist,
         #                                         nodesxsample=nodesxsample)
         one_hot, charges, x, node_mask, scaf_x, scaf_h, draw_xh = sample_scaf(args, device, model_sample, dataset_info, prop_dist,
-                                                                              nodesxsample=nodesxsample, loader=loader, dtype=dtype,
+                                                                              nodesxsample=nodesxsample, data=data, dtype=dtype,
                                                                               mask_func=generate_connected_mask, property_norms=property_norms)
         molecules['one_hot'].append(one_hot.detach().cpu())
         molecules['x'].append(x.detach().cpu())
@@ -464,71 +467,71 @@ def analyze_and_save_scaf(epoch, model_sample, nodes_dist, args, device, dataset
             else:
                 print("未找到可保存的SMILES字符串")
             
-            # 保存最终生成的分子为图像
-            vis.plot_data3d(x[0].cpu(), torch.argmax(one_hot[0], dim=1).cpu(), dataset_info, spheres_3d=True, 
-                            save_path=os.path.join(gen_dir, 'final.png'))
+            # # 保存最终生成的分子为图像
+            # vis.plot_data3d(x[0].cpu(), torch.argmax(one_hot[0], dim=1).cpu(), dataset_info, spheres_3d=True, 
+            #                 save_path=os.path.join(gen_dir, 'final.png'))
             
-            # 保存最终生成的分子为XYZ文件
-            vis.save_xyz_file(
-                path=gen_dir + "/", 
-                one_hot=one_hot[0:1].cpu(),  # 使用第一个分子，添加批次维度 [1, n_nodes, num_atom_types]
-                charges=charges[0:1].cpu() if charges is not None else None,  # 如果有电荷信息
-                positions=x[0:1].cpu(),  # 原子坐标
-                dataset_info=dataset_info,
-                node_mask=node_mask[0:1].cpu(),
-                name='final'
-            )
+            # # 保存最终生成的分子为XYZ文件
+            # vis.save_xyz_file(
+            #     path=gen_dir + "/", 
+            #     one_hot=one_hot[0:1].cpu(),  # 使用第一个分子，添加批次维度 [1, n_nodes, num_atom_types]
+            #     charges=charges[0:1].cpu() if charges is not None else None,  # 如果有电荷信息
+            #     positions=x[0:1].cpu(),  # 原子坐标
+            #     dataset_info=dataset_info,
+            #     node_mask=node_mask[0:1].cpu(),
+            #     name='final'
+            # )
             
-            # 保存输入片段为图像
-            vis.plot_data3d(scaf_x.cpu(), scaf_h.cpu(), dataset_info, spheres_3d=True, 
-                            save_path=os.path.join(gen_dir, 'fragment.png'))
+            # # 保存输入片段为图像
+            # vis.plot_data3d(scaf_x.cpu(), scaf_h.cpu(), dataset_info, spheres_3d=True, 
+            #                 save_path=os.path.join(gen_dir, 'fragment.png'))
             
-            # 保存输入片段为XYZ文件
-            # 注意：根据scaf_x和scaf_h的确切形状，可能需要调整维度
-            if len(scaf_x.shape) == 2:  # 如果没有批次维度 [n_nodes, 3]
-                scaf_x_batch = scaf_x.unsqueeze(0)  # 添加批次维度 [1, n_nodes, 3]
-                scaf_h_batch = scaf_h.unsqueeze(0) if len(scaf_h.shape) == 1 else scaf_h  # 对原子类型也做相同处理
-            else:
-                scaf_x_batch = scaf_x
-                scaf_h_batch = scaf_h
+            # # 保存输入片段为XYZ文件
+            # # 注意：根据scaf_x和scaf_h的确切形状，可能需要调整维度
+            # if len(scaf_x.shape) == 2:  # 如果没有批次维度 [n_nodes, 3]
+            #     scaf_x_batch = scaf_x.unsqueeze(0)  # 添加批次维度 [1, n_nodes, 3]
+            #     scaf_h_batch = scaf_h.unsqueeze(0) if len(scaf_h.shape) == 1 else scaf_h  # 对原子类型也做相同处理
+            # else:
+            #     scaf_x_batch = scaf_x
+            #     scaf_h_batch = scaf_h
             
-            # 将原子类型索引转换为one-hot编码
-            num_atom_types = len(dataset_info['atom_decoder'])  # 获取原子类型数量
-            # 确保scaf_h_batch是long类型，这是scatter_需要的
-            scaf_h_long = scaf_h_batch.long() if torch.is_tensor(scaf_h_batch) else torch.tensor(scaf_h_batch, dtype=torch.long)
+            # # 将原子类型索引转换为one-hot编码
+            # num_atom_types = len(dataset_info['atom_decoder'])  # 获取原子类型数量
+            # # 确保scaf_h_batch是long类型，这是scatter_需要的
+            # scaf_h_long = scaf_h_batch.long() if torch.is_tensor(scaf_h_batch) else torch.tensor(scaf_h_batch, dtype=torch.long)
             
-            # 创建one-hot张量
-            if len(scaf_h_long.shape) == 2:  # [batch_size, n_nodes]
-                scaf_one_hot = torch.zeros(scaf_h_long.shape[0], scaf_h_long.shape[1], num_atom_types)
-                # 使用scatter_填充one-hot编码
-                scaf_one_hot.scatter_(2, scaf_h_long.unsqueeze(-1), 1)
-            else:  # 如果scaf_h_long已经是3D张量，直接使用
-                scaf_one_hot = scaf_h_long
+            # # 创建one-hot张量
+            # if len(scaf_h_long.shape) == 2:  # [batch_size, n_nodes]
+            #     scaf_one_hot = torch.zeros(scaf_h_long.shape[0], scaf_h_long.shape[1], num_atom_types)
+            #     # 使用scatter_填充one-hot编码
+            #     scaf_one_hot.scatter_(2, scaf_h_long.unsqueeze(-1), 1)
+            # else:  # 如果scaf_h_long已经是3D张量，直接使用
+            #     scaf_one_hot = scaf_h_long
             
-            vis.save_xyz_file(
-                path=gen_dir + "/", 
-                one_hot=scaf_one_hot.cpu(),  # 使用转换后的one-hot表示
-                charges=None,  # charges不需要提供，因为我们已经提供了one_hot
-                positions=scaf_x_batch.cpu(),  # 片段原子坐标
-                dataset_info=dataset_info,
-                name='fragment'
-            )
+            # vis.save_xyz_file(
+            #     path=gen_dir + "/", 
+            #     one_hot=scaf_one_hot.cpu(),  # 使用转换后的one-hot表示
+            #     charges=None,  # charges不需要提供，因为我们已经提供了one_hot
+            #     positions=scaf_x_batch.cpu(),  # 片段原子坐标
+            #     dataset_info=dataset_info,
+            #     name='fragment'
+            # )
             
-            # 保存中间生成步骤的分子
-            for j in range(len(draw_xh)):
-                # 保存中间步骤为图像
-                vis.plot_data3d(draw_xh[j][0][0].cpu(), torch.argmax(draw_xh[j][1][0].cpu(), dim=1).cpu(), dataset_info, spheres_3d=True, 
-                                save_path=os.path.join(gen_dir, '%d.png' % j))
+            # # 保存中间生成步骤的分子
+            # for j in range(len(draw_xh)):
+            #     # 保存中间步骤为图像
+            #     vis.plot_data3d(draw_xh[j][0][0].cpu(), torch.argmax(draw_xh[j][1][0].cpu(), dim=1).cpu(), dataset_info, spheres_3d=True, 
+            #                     save_path=os.path.join(gen_dir, '%d.png' % j))
                 
-                # 保存中间步骤为XYZ文件
-                vis.save_xyz_file(
-                    path=gen_dir + "/", 
-                    one_hot=draw_xh[j][1].cpu(),  # 应该已经包含批次维度
-                    charges=None,  # 如果没有电荷信息
-                    positions=draw_xh[j][0].cpu(),  # 原子坐标
-                    dataset_info=dataset_info,
-                    name='step_%d' % j
-                )
+            #     # 保存中间步骤为XYZ文件
+            #     vis.save_xyz_file(
+            #         path=gen_dir + "/", 
+            #         one_hot=draw_xh[j][1].cpu(),  # 应该已经包含批次维度
+            #         charges=None,  # 如果没有电荷信息
+            #         positions=draw_xh[j][0].cpu(),  # 原子坐标
+            #         dataset_info=dataset_info,
+            #         name='step_%d' % j
+            #     )
 
     molecules = {key: torch.cat(molecules[key], dim=0) for key in molecules}
     validity_dict, rdkit_tuple = analyze_stability_for_molecules(molecules, dataset_info)

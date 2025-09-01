@@ -301,7 +301,7 @@ def main():
                     eval_loader = torch.utils.data.DataLoader(
                         dataset=eval_dataset,
                         batch_size=1,
-                        shuffle=False,  # 评估时不需要打乱顺序
+                        shuffle=True,  # 评估时不需要打乱顺序
                         num_workers=0,  # 避免多进程问题
                         collate_fn=original_loader.collate_fn,  # 保留原始的collate函数
                         pin_memory=original_loader.pin_memory,

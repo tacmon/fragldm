@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 设置可调整的参数（可根据需要修改）
-EXP_NAME="local_container_test_first_epoch"
+EXP_NAME="local_container_check_shuffle_loader"
 N_EPOCHS=3000
 BATCH_SIZE=16
 TEST_EPOCHS=1
@@ -29,6 +29,7 @@ export PYTHONPATH=$(pwd)
 # 运行训练命令
 python main_qm9.py \
   --exp_name "$EXP_NAME" \
+  --resume ./outputs/local_container_test_first_epoch \
   --n_epochs $N_EPOCHS \
   --batch_size $BATCH_SIZE \
   --nf 192 \
