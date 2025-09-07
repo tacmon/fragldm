@@ -318,10 +318,10 @@ def main():
                                     prop_dist=prop_dist, n_samples=args.n_stability_samples)
             nll_val = test(args=args, loader=dataloaders['valid'], epoch=epoch, eval_model=model_ema_dp,
                            partition='Val', device=device, dtype=dtype, nodes_dist=nodes_dist,
-                           property_norms=property_norms)
+                           property_norms=property_norms, dataset_info=dataset_info)
             nll_test = test(args=args, loader=dataloaders['test'], epoch=epoch, eval_model=model_ema_dp,
                             partition='Test', device=device, dtype=dtype,
-                            nodes_dist=nodes_dist, property_norms=property_norms)
+                            nodes_dist=nodes_dist, property_norms=property_norms, dataset_info=dataset_info)
 
             if nll_val < best_nll_val:
                 best_nll_val = nll_val

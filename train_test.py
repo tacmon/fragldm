@@ -70,9 +70,11 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
         if args.partial_conditioning:
             # 根据策略生成掩码
             if args.mask_strategy == "connected":
-                # 使用连通掩码生成
+                # 使用连通掩码生成（带化学键信息）
+                atom_types = torch.argmax(one_hot, dim=2)  # 从one_hot转换为原子类型
                 noise_mask, condition_mask = generate_connected_mask(
-                    x, node_mask, noise_ratio=args.noise_ratio)
+                    x, node_mask, atom_types=atom_types, dataset_info=dataset_info, 
+                    noise_ratio=args.noise_ratio)
                 # 画图
                 # flag_0 = condition_mask[0]
                 # scaf_x_0 = x[0].cpu()
@@ -87,8 +89,9 @@ def train_epoch(args, loader, epoch, model, model_dp, model_ema, ema, device, dt
                 # print(scaf_h)
                 # scaf_x = torch.tensor(scaf_x)
                 # scaf_h = torch.tensor(scaf_h)
-                # vis.plot_data3d(scaf_x, scaf_h, dataset_info, spheres_3d=True, save_path="/app/tacmon-geoldm/outputs/fragment_gen/1.png")
-                # vis.plot_data3d(x[0].cpu(), torch.argmax(h['categorical'][0], dim=1).cpu(), dataset_info, spheres_3d=True, save_path="/app/tacmon-geoldm/outputs/fragment_gen/2.png")
+                # vis.plot_data3d(scaf_x, scaf_h, dataset_info, spheres_3d=True, save_path="./outputs/片段检查/1.png")
+                # vis.plot_data3d(x[0].cpu(), torch.argmax(h['categorical'][0], dim=1).cpu(), dataset_info, spheres_3d=True, save_path="./outputs/片段检查/2.png")
+                # exit(0) # 画一个图就结束
             else:
                 # 使用其他策略
                 from mask_utils import generate_mask_by_strategy, get_condition_mask
@@ -208,7 +211,7 @@ def check_mask_correct(variables, node_mask):
             assert_correctly_masked(variable, node_mask)
 
 
-def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_dist, partition='Test'):
+def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_dist, dataset_info, partition='Test'):
     eval_model.eval()
     with torch.no_grad():
         nll_epoch = 0
@@ -251,17 +254,21 @@ def test(args, loader, epoch, eval_model, device, dtype, property_norms, nodes_d
                 
                 # 根据策略生成掩码
                 if args.mask_strategy == "connected":
-                    # 使用连通掩码生成
+                    # 使用连通掩码生成（带化学键信息）
+                    atom_types = torch.argmax(one_hot, dim=2)  # 从one_hot转换为原子类型
                     noise_mask, condition_mask = generate_connected_mask(
-                        x, node_mask, noise_ratio=args.noise_ratio, random_seed=test_seed)
+                        x, node_mask, atom_types=atom_types, dataset_info=dataset_info, 
+                        noise_ratio=args.noise_ratio, random_seed=test_seed)
                 else:
                     # 使用其他策略
                     from mask_utils import generate_mask_by_strategy, get_condition_mask
+                    atom_types = torch.argmax(one_hot, dim=2)  # 从one_hot转换为原子类型
                     noise_mask = generate_mask_by_strategy(
                         x, h['categorical'], node_mask.squeeze(2), 
                         strategy=args.mask_strategy, 
                         noise_ratio=args.noise_ratio,
-                        random_seed=test_seed)
+                        random_seed=test_seed,
+                        atom_types=atom_types, dataset_info=dataset_info)
                     # 根据噪声掩码获取条件掩码
                     condition_mask = get_condition_mask(node_mask.squeeze(2), noise_mask).unsqueeze(2)
                     noise_mask = noise_mask.unsqueeze(2)

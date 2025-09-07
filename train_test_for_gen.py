@@ -72,8 +72,11 @@ def analyze_and_save_scaf(model_sample, nodes_dist, args, device, dataset_info, 
             # 使用固定的随机种子来保证测试的一致性
             test_seed = None
             
+            # 使用连通掩码生成（带化学键信息）
+            atom_types = torch.argmax(one_hot, dim=2)  # 从one_hot转换为原子类型
             noise_mask, condition_mask = generate_connected_mask(
-                x, node_mask, noise_ratio=args.noise_ratio, random_seed=test_seed)
+                x, node_mask, atom_types=atom_types, dataset_info=dataset_info, 
+                noise_ratio=args.noise_ratio, random_seed=test_seed)
 
             # edge_mask = node_mask.permute(0, 2, 1) * noise_mask
             edge_mask = torch.zeros((batch_size, n_nodes, n_nodes), device=device, dtype=dtype)

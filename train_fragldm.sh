@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # 设置可调整的参数（可根据需要修改）
-EXP_NAME="local_container_check_shuffle_loader"
+EXP_NAME="local_container_修改了BFS策略_本地测试"
 N_EPOCHS=3000
 BATCH_SIZE=16
 TEST_EPOCHS=1
-NOISE_RATIO=0.8
+NOISE_RATIO=-1
 MASK_STRATEGY="connected"  # 可选: "random", "connected", "central", "peripheral"
 NUM_WORKERS=16 # 数据加载并行进程数
 # RESUME_PATH="./outputs/${EXP_NAME}_resume"
@@ -51,6 +51,7 @@ python main_qm9.py \
   --mask_strategy $MASK_STRATEGY \
   --num_workers $NUM_WORKERS \
   --break_train_epoch False \
-  --online True
+  --online True \
+  --no_wandb
 
 echo -e "${GREEN}训练完成!${NC}" 

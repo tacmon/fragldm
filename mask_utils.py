@@ -9,6 +9,7 @@ import torch
 import numpy as np
 from collections import deque
 import torch.nn.functional as F
+from qm9.bond_analyze import get_bond_order
 
 
 def get_adj_matrix(n_nodes, batch_size, device):
@@ -69,14 +70,17 @@ def get_edges_batch(n_nodes, batch_size, device):
     return edges
 
 
-def generate_connected_mask(x, h, node_mask, noise_ratio=0.5, random_seed=None):
+def generate_connected_mask(x, h, node_mask, atom_types=None, dataset_info=None, noise_ratio=0.5, random_seed=None):
     """
     生成一个连接性掩码，确保噪声区域是连接的。
+    使用化学键信息进行更准确的连通性判断。
     
     参数:
         x (torch.Tensor): 节点坐标，形状为 [batch_size, num_nodes, 3]
         h (torch.Tensor): 节点特征，形状为 [batch_size, num_nodes, h_dim]
         node_mask (torch.Tensor): 节点掩码，形状为 [batch_size, num_nodes]
+        atom_types (torch.Tensor, optional): 原子类型，形状为 [batch_size, num_nodes]
+        dataset_info (dict, optional): 数据集信息，包含atom_decoder等
         noise_ratio (float): 添加噪声的节点比例，范围在[0, 1]之间
         random_seed (int): 随机数种子，用于可重复性
         
@@ -115,32 +119,88 @@ def generate_connected_mask(x, h, node_mask, noise_ratio=0.5, random_seed=None):
         queue = deque([start_idx])
         visited = set([start_idx])
         
-        # 计算节点之间的距离矩阵（欧几里得距离）
+        # 计算节点之间的距离矩阵
         coords = x[b].detach().cpu().numpy()
         
-        while len(selected_nodes) < num_noise_nodes and queue:
-            current = queue.popleft()
-            selected_nodes.append(current)
+        # 如果有原子类型信息，使用化学键判断连通性
+        if atom_types is not None and dataset_info is not None:
+            atom_types_batch = atom_types[b].detach().cpu().numpy()
+            atom_decoder = dataset_info['atom_decoder']
             
-            if len(selected_nodes) >= num_noise_nodes:
-                break
-            
-            # 计算当前节点与所有其他节点的距离
-            distances = []
-            for node in valid_nodes:
-                if node not in visited:
-                    # 计算欧几里得距离
-                    dist = np.linalg.norm(coords[current] - coords[node])
-                    distances.append((node, dist))
-            
-            # 按距离排序
-            distances.sort(key=lambda x: x[1])
-            
-            # 添加最近的节点到队列
-            for node, _ in distances:
-                if node not in visited:
-                    visited.add(node)
-                    queue.append(node)
+            while len(selected_nodes) < num_noise_nodes and queue:
+                current = queue.popleft()
+                selected_nodes.append(current)
+                
+                if len(selected_nodes) >= num_noise_nodes:
+                    break
+                
+                # 找到与当前节点有化学键的相邻节点
+                bonded_neighbors = []
+                for node in valid_nodes:
+                    if node not in visited:
+                        # 计算距离
+                        dist = np.linalg.norm(coords[current] - coords[node])
+                        
+                        # 使用化学键判断
+                        atom1 = atom_decoder[atom_types_batch[current]]
+                        atom2 = atom_decoder[atom_types_batch[node]]
+                        bond_order = get_bond_order(atom1, atom2, dist)
+                        
+                        if bond_order > 0:  # 如果有化学键
+                            bonded_neighbors.append((node, dist))
+                
+                # 按距离排序（优先选择距离近的化学键）
+                bonded_neighbors.sort(key=lambda x: x[1])
+                
+                # 添加有化学键的相邻节点到队列
+                for node, _ in bonded_neighbors:
+                    if node not in visited:
+                        visited.add(node)
+                        queue.append(node)
+                
+                # 如果没有找到化学键连接的节点，回退到距离判断
+                if not bonded_neighbors:
+                    # 计算当前节点与所有其他节点的距离
+                    distances = []
+                    for node in valid_nodes:
+                        if node not in visited:
+                            dist = np.linalg.norm(coords[current] - coords[node])
+                            distances.append((node, dist))
+                    
+                    # 按距离排序
+                    distances.sort(key=lambda x: x[1])
+                    
+                    # 添加最近的节点到队列（作为回退方案）
+                    for node, _ in distances:
+                        if node not in visited:
+                            visited.add(node)
+                            queue.append(node)
+                            break  # 只添加一个最近的节点
+        else:
+            # 回退到原始的距离判断方法
+            while len(selected_nodes) < num_noise_nodes and queue:
+                current = queue.popleft()
+                selected_nodes.append(current)
+                
+                if len(selected_nodes) >= num_noise_nodes:
+                    break
+                
+                # 计算当前节点与所有其他节点的距离
+                distances = []
+                for node in valid_nodes:
+                    if node not in visited:
+                        # 计算欧几里得距离
+                        dist = np.linalg.norm(coords[current] - coords[node])
+                        distances.append((node, dist))
+                
+                # 按距离排序
+                distances.sort(key=lambda x: x[1])
+                
+                # 添加最近的节点到队列
+                for node, _ in distances:
+                    if node not in visited:
+                        visited.add(node)
+                        queue.append(node)
         
         # 更新噪声掩码
         noise_mask[b, selected_nodes] = 1
@@ -148,7 +208,7 @@ def generate_connected_mask(x, h, node_mask, noise_ratio=0.5, random_seed=None):
     return noise_mask
 
 
-def generate_mask_by_strategy(x, h, node_mask, strategy="random", noise_ratio=0.5, random_seed=None):
+def generate_mask_by_strategy(x, h, node_mask, strategy="random", noise_ratio=0.5, random_seed=None, atom_types=None, dataset_info=None):
     """
     根据指定策略生成掩码。
     
@@ -159,6 +219,8 @@ def generate_mask_by_strategy(x, h, node_mask, strategy="random", noise_ratio=0.
         strategy (str): 掩码生成策略，可以是 "random", "connected", "central", "peripheral"
         noise_ratio (float): 添加噪声的节点比例，范围在[0, 1]之间
         random_seed (int): 随机数种子，用于可重复性
+        atom_types (torch.Tensor, optional): 原子类型，形状为 [batch_size, num_nodes]
+        dataset_info (dict, optional): 数据集信息，包含atom_decoder等
         
     返回:
         torch.Tensor: 噪声掩码，形状为 [batch_size, num_nodes]，其中1表示节点将被标记为噪声
@@ -195,8 +257,8 @@ def generate_mask_by_strategy(x, h, node_mask, strategy="random", noise_ratio=0.
             noise_mask[b, selected_nodes] = 1
     
     elif strategy == "connected":
-        # 使用连接性掩码生成
-        noise_mask = generate_connected_mask(x, h, node_mask, noise_ratio, random_seed)
+        # 使用连接性掩码生成（带化学键信息）
+        noise_mask = generate_connected_mask(x, h, node_mask, atom_types, dataset_info, noise_ratio, random_seed)
     
     elif strategy == "central":
         # 对批次中的每个图，选择中心区域的节点
